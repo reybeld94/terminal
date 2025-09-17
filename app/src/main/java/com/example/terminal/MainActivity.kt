@@ -1,25 +1,17 @@
 package com.example.terminal
 
-import android.content.Intent
 import android.os.Bundle
-import android.widget.Button
-import androidx.appcompat.app.AppCompatActivity
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import com.example.terminal.ui.theme.TerminalTheme
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
-
-        findViewById<Button>(R.id.buttonClockInOut).setOnClickListener {
-            startActivity(Intent(this, ClockInOutActivity::class.java))
-        }
-
-        findViewById<Button>(R.id.buttonWorkOrders).setOnClickListener {
-            startActivity(Intent(this, WorkOrdersActivity::class.java))
-        }
-
-        findViewById<Button>(R.id.buttonIssueMaterials).setOnClickListener {
-            startActivity(Intent(this, IssueMaterialsActivity::class.java))
+        setContent {
+            TerminalTheme {
+                TerminalApp()
+            }
         }
     }
 }
