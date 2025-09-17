@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -453,7 +452,8 @@ private fun NumericKeypad(
 ) {
     Column(
         modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
         val numberRows = listOf(
             listOf("1", "2", "3"),
@@ -463,8 +463,8 @@ private fun NumericKeypad(
 
         numberRows.forEach { row ->
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 row.forEach { number ->
                     KeypadButton(
@@ -476,8 +476,8 @@ private fun NumericKeypad(
         }
 
         Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
             KeypadButton(label = "Clear", onClick = onClear)
             KeypadButton(label = "0", onClick = { onNumberClick("0") })
@@ -487,27 +487,25 @@ private fun NumericKeypad(
 }
 
 @Composable
-private fun RowScope.KeypadButton(
+private fun KeypadButton(
     label: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Box(
         modifier = modifier
-            .weight(1f)
-            .height(72.dp)
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
         Image(
             painter = painterResource(id = R.drawable.button),
             contentDescription = null,
-            modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.FillBounds
+            modifier = Modifier.size(90.dp),
+            contentScale = ContentScale.Fit
         )
         Text(
             text = label,
-            color = Color.White,
+            color = Color.Black,
             fontSize = 20.sp,
             textAlign = TextAlign.Center
         )
