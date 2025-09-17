@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -14,6 +15,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -29,16 +32,13 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavHostController
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
 import com.example.terminal.ui.theme.TerminalTheme
 import java.util.ArrayList
 
 @Composable
 fun TerminalApp() {
-    val navController = rememberNavController()
+    val tabs = TerminalTab.values()
+    var selectedTab by rememberSaveable { mutableStateOf(TerminalTab.CLOCK) }
     val loginStates = rememberSaveable(saver = LoginStateSaver) { mutableStateMapOf<Int, Boolean>() }
     val workOrdersStates = rememberSaveable(saver = WorkOrdersStateSaver) {
         mutableStateMapOf<Int, MutableSet<Int>>()
@@ -51,103 +51,404 @@ fun TerminalApp() {
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background
     ) {
-        NavHost(
-            navController = navController,
-            startDestination = "menu",
-            modifier = Modifier.fillMaxSize()
-        ) {
-            composable("menu") {
-                LeftPanel(
-                    navController = navController,
-                    modifier = Modifier.fillMaxSize()
-                )
+        Column(modifier = Modifier.fillMaxSize()) {
+            val selectedIndex = tabs.indexOf(selectedTab)
+            TabRow(selectedTabIndex = selectedIndex) {
+                tabs.forEachIndexed { index, tab ->
+                    Tab(
+                        selected = index == selectedIndex,
+                        onClick = { selectedTab = tab },
+                        text = { Text(tab.title) }
+                    )
+                }
             }
-            composable("clock") {
-                ClockScreen(
-                    loginStates = loginStates,
-                    modifier = Modifier.fillMaxSize()
-                )
-            }
-            composable("workorders") {
-                WorkOrdersScreen(
-                    workOrdersStates = workOrdersStates,
-                    modifier = Modifier.fillMaxSize()
-                )
-            }
-            composable("materials") {
-                IssueMaterialsScreen(
-                    materialsStates = materialsStates,
-                    modifier = Modifier.fillMaxSize()
-                )
+
+            Box(modifier = Modifier.weight(1f)) {
+                when (selectedTab) {
+                    TerminalTab.CLOCK -> ClockTabContent(
+                        loginStates = loginStates,
+                        modifier = Modifier.fillMaxSize()
+                    )
+
+                    TerminalTab.WORK_ORDERS -> WorkOrdersTabContent(
+                        workOrdersStates = workOrdersStates,
+                        modifier = Modifier.fillMaxSize()
+                    )
+
+                    TerminalTab.ISSUE_MATERIALS -> IssueMaterialsTabContent(
+                        materialsStates = materialsStates,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
             }
         }
     }
 }
 
+private enum class TerminalTab(val title: String) {
+    CLOCK("Clock In/Out"),
+    WORK_ORDERS("Work Orders"),
+    ISSUE_MATERIALS("Issue Materials")
+}
+
 @Composable
-private fun LeftPanel(
-    navController: NavHostController,
+private fun ClockTabContent(
+    loginStates: SnapshotStateMap<Int, Boolean>,
     modifier: Modifier = Modifier
 ) {
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(24.dp),
-        verticalArrangement = Arrangement.Top,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(
-            text = "Panel de Información",
-            style = MaterialTheme.typography.headlineSmall,
-            modifier = Modifier.align(Alignment.Start)
+    val context = LocalContext.current
+    var inputValue by rememberSaveable { mutableStateOf("") }
+    var lastEmployee by rememberSaveable { mutableStateOf<Int?>(null) }
+
+    Row(modifier = modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier
+                .weight(0.6f)
+                .fillMaxHeight()
+                .padding(24.dp),
+            verticalArrangement = Arrangement.Top,
+            horizontalAlignment = Alignment.Start
+        ) {
+            Text(
+                text = "Clock In/Out",
+                style = MaterialTheme.typography.headlineSmall
+            )
+            Spacer(modifier = Modifier.height(24.dp))
+            DisplayValue(
+                label = "Empleado",
+                value = inputValue.ifEmpty { lastEmployee?.toString().orEmpty() }
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            val statusText = lastEmployee?.let { employee ->
+                if (loginStates[employee] == true) "Clocked In" else "Clocked Out"
+            } ?: "--"
+            DisplayValue(label = "Estado", value = statusText)
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = "Ingrese el número de empleado y presione Enter para clock in/out.",
+                style = MaterialTheme.typography.bodyLarge
+            )
+        }
+
+        NumericKeypad(
+            modifier = Modifier
+                .weight(0.4f)
+                .fillMaxHeight()
+                .padding(24.dp),
+            onNumberClick = { digit -> inputValue += digit },
+            onClear = { inputValue = "" },
+            onEnter = {
+                val employeeNumber = inputValue.toIntOrNull()
+                if (employeeNumber == null) {
+                    Toast.makeText(context, "Ingrese un número de empleado", Toast.LENGTH_SHORT).show()
+                } else {
+                    val isLoggedIn = loginStates[employeeNumber] == true
+                    if (isLoggedIn) {
+                        Toast.makeText(context, "Clock Out Successful", Toast.LENGTH_SHORT).show()
+                        loginStates.remove(employeeNumber)
+                    } else {
+                        Toast.makeText(context, "Clock In Successful", Toast.LENGTH_SHORT).show()
+                        loginStates[employeeNumber] = true
+                    }
+                    lastEmployee = employeeNumber
+                }
+                inputValue = ""
+            }
         )
-        Spacer(modifier = Modifier.height(32.dp))
-        MenuButton(text = "Clock In/Out", onClick = { navController.navigate("clock") })
-        Spacer(modifier = Modifier.height(16.dp))
-        MenuButton(text = "Work Orders", onClick = { navController.navigate("workorders") })
-        Spacer(modifier = Modifier.height(16.dp))
-        MenuButton(text = "Issue Materials", onClick = { navController.navigate("materials") })
+    }
+}
+
+private enum class WorkOrderInputField { EMPLOYEE, WORK_ORDER }
+
+private enum class MaterialInputField { EMPLOYEE, MATERIAL }
+
+@Composable
+private fun WorkOrdersTabContent(
+    workOrdersStates: SnapshotStateMap<Int, MutableSet<Int>>,
+    modifier: Modifier = Modifier
+) {
+    val context = LocalContext.current
+    var inputValue by rememberSaveable { mutableStateOf("") }
+    var employeeNumber by rememberSaveable { mutableStateOf<Int?>(null) }
+    var workOrderNumber by rememberSaveable { mutableStateOf<Int?>(null) }
+    var currentField by rememberSaveable { mutableStateOf(WorkOrderInputField.EMPLOYEE) }
+
+    val instructionText = when (currentField) {
+        WorkOrderInputField.EMPLOYEE -> "Ingrese o escanee el número de empleado y presione Enter."
+        WorkOrderInputField.WORK_ORDER -> "Ingrese o escanee el número de Work Order y presione Enter."
+    }
+
+    Row(modifier = modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier
+                .weight(0.6f)
+                .fillMaxHeight()
+                .padding(24.dp),
+            verticalArrangement = Arrangement.Top,
+            horizontalAlignment = Alignment.Start
+        ) {
+            Text(
+                text = "Work Orders",
+                style = MaterialTheme.typography.headlineSmall
+            )
+            Spacer(modifier = Modifier.height(24.dp))
+            DisplayValue(label = "Employee", value = employeeNumber?.toString().orEmpty())
+            Spacer(modifier = Modifier.height(8.dp))
+            DisplayValue(label = "Work Order", value = workOrderNumber?.toString().orEmpty())
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = instructionText,
+                style = MaterialTheme.typography.bodyLarge
+            )
+            Spacer(modifier = Modifier.height(24.dp))
+            Button(
+                onClick = {
+                    val employee = employeeNumber
+                    val workOrder = workOrderNumber
+                    if (employee == null) {
+                        Toast.makeText(context, "Ingrese un número de empleado", Toast.LENGTH_SHORT).show()
+                        return@Button
+                    }
+                    if (workOrder == null) {
+                        Toast.makeText(context, "Ingrese un número de Work Order", Toast.LENGTH_SHORT).show()
+                        return@Button
+                    }
+
+                    val updatedSet = workOrdersStates[employee]?.toMutableSet() ?: mutableSetOf()
+                    updatedSet.add(workOrder)
+                    workOrdersStates[employee] = updatedSet
+
+                    Toast.makeText(
+                        context,
+                        "Employee $employee Clocked In on WO $workOrder",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(72.dp)
+            ) {
+                Text(text = "Clock In WO", style = MaterialTheme.typography.titleLarge)
+            }
+            Spacer(modifier = Modifier.height(16.dp))
+            Button(
+                onClick = {
+                    val employee = employeeNumber
+                    val workOrder = workOrderNumber
+                    if (employee == null) {
+                        Toast.makeText(context, "Ingrese un número de empleado", Toast.LENGTH_SHORT).show()
+                        return@Button
+                    }
+                    if (workOrder == null) {
+                        Toast.makeText(context, "Ingrese un número de Work Order", Toast.LENGTH_SHORT).show()
+                        return@Button
+                    }
+
+                    val existingSet = workOrdersStates[employee]
+                    if (existingSet != null) {
+                        val updatedSet = existingSet.toMutableSet()
+                        updatedSet.remove(workOrder)
+                        if (updatedSet.isEmpty()) {
+                            workOrdersStates.remove(employee)
+                        } else {
+                            workOrdersStates[employee] = updatedSet
+                        }
+                    }
+
+                    Toast.makeText(
+                        context,
+                        "Employee $employee Clocked Out from WO $workOrder",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(72.dp)
+            ) {
+                Text(text = "Clock Out WO", style = MaterialTheme.typography.titleLarge)
+            }
+        }
+
+        NumericKeypad(
+            modifier = Modifier
+                .weight(0.4f)
+                .fillMaxHeight()
+                .padding(24.dp),
+            onNumberClick = { digit -> inputValue += digit },
+            onClear = { inputValue = "" },
+            onEnter = {
+                when (currentField) {
+                    WorkOrderInputField.EMPLOYEE -> {
+                        val employee = inputValue.toIntOrNull()
+                        if (employee == null) {
+                            Toast.makeText(
+                                context,
+                                "Ingrese un número de empleado",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        } else {
+                            employeeNumber = employee
+                            currentField = WorkOrderInputField.WORK_ORDER
+                            inputValue = ""
+                        }
+                    }
+
+                    WorkOrderInputField.WORK_ORDER -> {
+                        val workOrder = inputValue.toIntOrNull()
+                        if (workOrder == null) {
+                            Toast.makeText(
+                                context,
+                                "Ingrese un número de Work Order",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        } else {
+                            workOrderNumber = workOrder
+                            currentField = WorkOrderInputField.EMPLOYEE
+                            inputValue = ""
+                        }
+                    }
+                }
+            }
+        )
     }
 }
 
 @Composable
-private fun MenuButton(text: String, onClick: () -> Unit) {
-    Button(
-        onClick = onClick,
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(72.dp)
-    ) {
-        Text(
-            text = text,
-            style = MaterialTheme.typography.titleLarge
+private fun IssueMaterialsTabContent(
+    materialsStates: SnapshotStateMap<Int, MutableList<String>>,
+    modifier: Modifier = Modifier
+) {
+    val context = LocalContext.current
+    var inputValue by rememberSaveable { mutableStateOf("") }
+    var employeeNumber by rememberSaveable { mutableStateOf<Int?>(null) }
+    var materialCode by rememberSaveable { mutableStateOf<String?>(null) }
+    var currentField by rememberSaveable { mutableStateOf(MaterialInputField.EMPLOYEE) }
+
+    val instructionText = when (currentField) {
+        MaterialInputField.EMPLOYEE -> "Ingrese o escanee el número de empleado y presione Enter."
+        MaterialInputField.MATERIAL -> "Ingrese o escanee el código de material y presione Enter."
+    }
+
+    Row(modifier = modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier
+                .weight(0.6f)
+                .fillMaxHeight()
+                .padding(24.dp),
+            verticalArrangement = Arrangement.Top,
+            horizontalAlignment = Alignment.Start
+        ) {
+            Text(
+                text = "Issue Materials",
+                style = MaterialTheme.typography.headlineSmall
+            )
+            Spacer(modifier = Modifier.height(24.dp))
+            DisplayValue(label = "Employee", value = employeeNumber?.toString().orEmpty())
+            Spacer(modifier = Modifier.height(8.dp))
+            DisplayValue(label = "Material", value = materialCode.orEmpty())
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = instructionText,
+                style = MaterialTheme.typography.bodyLarge
+            )
+            Spacer(modifier = Modifier.height(24.dp))
+            Button(
+                onClick = {
+                    val employee = employeeNumber
+                    val material = materialCode
+                    if (employee == null) {
+                        Toast.makeText(context, "Ingrese un número de empleado", Toast.LENGTH_SHORT).show()
+                        return@Button
+                    }
+                    if (material.isNullOrEmpty()) {
+                        Toast.makeText(context, "Ingrese un código de material", Toast.LENGTH_SHORT).show()
+                        return@Button
+                    }
+
+                    val updatedList = materialsStates[employee]?.toMutableList() ?: mutableListOf()
+                    updatedList.add(material)
+                    materialsStates[employee] = updatedList
+
+                    Toast.makeText(
+                        context,
+                        "Employee $employee issued Material $material",
+                        Toast.LENGTH_SHORT
+                    ).show()
+
+                    materialCode = null
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(72.dp)
+            ) {
+                Text(text = "Issue Material", style = MaterialTheme.typography.titleLarge)
+            }
+        }
+
+        NumericKeypad(
+            modifier = Modifier
+                .weight(0.4f)
+                .fillMaxHeight()
+                .padding(24.dp),
+            onNumberClick = { digit -> inputValue += digit },
+            onClear = { inputValue = "" },
+            onEnter = {
+                when (currentField) {
+                    MaterialInputField.EMPLOYEE -> {
+                        val employee = inputValue.toIntOrNull()
+                        if (employee == null) {
+                            Toast.makeText(
+                                context,
+                                "Ingrese un número de empleado",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        } else {
+                            employeeNumber = employee
+                            currentField = MaterialInputField.MATERIAL
+                            inputValue = ""
+                        }
+                    }
+
+                    MaterialInputField.MATERIAL -> {
+                        if (inputValue.isEmpty()) {
+                            Toast.makeText(
+                                context,
+                                "Ingrese un código de material",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        } else {
+                            materialCode = inputValue
+                            currentField = MaterialInputField.EMPLOYEE
+                            inputValue = ""
+                        }
+                    }
+                }
+            }
         )
     }
 }
 
 @Composable
-private fun KeypadPanel(
+private fun DisplayValue(label: String, value: String) {
+    Text(
+        text = "$label: ${value.ifEmpty { "--" }}",
+        style = MaterialTheme.typography.titleLarge,
+        modifier = Modifier.fillMaxWidth(),
+        textAlign = TextAlign.Start
+    )
+}
+
+@Composable
+private fun NumericKeypad(
     modifier: Modifier = Modifier,
-    inputValue: String,
     onNumberClick: (String) -> Unit,
     onClear: () -> Unit,
     onEnter: () -> Unit
 ) {
     Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(24.dp),
+        modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Text(
-            text = inputValue.ifEmpty { " " },
-            style = MaterialTheme.typography.displaySmall,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 8.dp),
-            textAlign = TextAlign.End
-        )
-
         val numberRows = listOf(
             listOf("1", "2", "3"),
             listOf("4", "5", "6"),
@@ -196,318 +497,6 @@ private fun RowScope.KeypadButton(
             style = MaterialTheme.typography.titleLarge
         )
     }
-}
-
-@Composable
-private fun ClockScreen(
-    loginStates: SnapshotStateMap<Int, Boolean>,
-    modifier: Modifier = Modifier
-) {
-    val context = LocalContext.current
-    var inputValue by rememberSaveable { mutableStateOf("") }
-
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(24.dp),
-        verticalArrangement = Arrangement.Top,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(
-            text = "Clock In/Out",
-            style = MaterialTheme.typography.headlineSmall,
-            modifier = Modifier.align(Alignment.Start)
-        )
-        Spacer(modifier = Modifier.height(24.dp))
-        KeypadPanel(
-            modifier = Modifier.fillMaxWidth(),
-            inputValue = inputValue,
-            onNumberClick = { digit -> inputValue += digit },
-            onClear = { inputValue = "" },
-            onEnter = {
-                val employeeNumber = inputValue.toIntOrNull()
-                if (employeeNumber == null) {
-                    Toast.makeText(context, "Ingrese un número de empleado", Toast.LENGTH_SHORT).show()
-                } else {
-                    val isLoggedIn = loginStates[employeeNumber] == true
-                    if (isLoggedIn) {
-                        Toast.makeText(context, "Clock Out Successful", Toast.LENGTH_SHORT).show()
-                        loginStates.remove(employeeNumber)
-                    } else {
-                        Toast.makeText(context, "Clock In Successful", Toast.LENGTH_SHORT).show()
-                        loginStates[employeeNumber] = true
-                    }
-                }
-                inputValue = ""
-            }
-        )
-    }
-}
-
-private enum class WorkOrderInputField { EMPLOYEE, WORK_ORDER }
-
-private enum class MaterialInputField { EMPLOYEE, MATERIAL }
-
-@Composable
-private fun WorkOrdersScreen(
-    workOrdersStates: SnapshotStateMap<Int, MutableSet<Int>>,
-    modifier: Modifier = Modifier
-) {
-    val context = LocalContext.current
-    var inputValue by rememberSaveable { mutableStateOf("") }
-    var employeeNumber by rememberSaveable { mutableStateOf<Int?>(null) }
-    var workOrderNumber by rememberSaveable { mutableStateOf<Int?>(null) }
-    var currentField by rememberSaveable { mutableStateOf(WorkOrderInputField.EMPLOYEE) }
-
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(24.dp),
-        verticalArrangement = Arrangement.Top,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(
-            text = "Work Orders",
-            style = MaterialTheme.typography.headlineSmall,
-            modifier = Modifier.align(Alignment.Start)
-        )
-        Spacer(modifier = Modifier.height(24.dp))
-        DisplayValue(label = "Employee", value = employeeNumber?.toString().orEmpty())
-        Spacer(modifier = Modifier.height(8.dp))
-        DisplayValue(label = "Work Order", value = workOrderNumber?.toString().orEmpty())
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = when (currentField) {
-                WorkOrderInputField.EMPLOYEE -> "Ingresando Employee Number"
-                WorkOrderInputField.WORK_ORDER -> "Ingresando Work Order Number"
-            },
-            style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.align(Alignment.Start)
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-
-        KeypadPanel(
-            modifier = Modifier.fillMaxWidth(),
-            inputValue = inputValue,
-            onNumberClick = { digit -> inputValue += digit },
-            onClear = { inputValue = "" },
-            onEnter = {
-                when (currentField) {
-                    WorkOrderInputField.EMPLOYEE -> {
-                        val employee = inputValue.toIntOrNull()
-                        if (employee == null) {
-                            Toast.makeText(context, "Ingrese un número de empleado", Toast.LENGTH_SHORT)
-                                .show()
-                        } else {
-                            employeeNumber = employee
-                            currentField = WorkOrderInputField.WORK_ORDER
-                            inputValue = ""
-                        }
-                    }
-
-                    WorkOrderInputField.WORK_ORDER -> {
-                        val workOrder = inputValue.toIntOrNull()
-                        if (workOrder == null) {
-                            Toast.makeText(context, "Ingrese un número de Work Order", Toast.LENGTH_SHORT)
-                                .show()
-                        } else {
-                            workOrderNumber = workOrder
-                            currentField = WorkOrderInputField.EMPLOYEE
-                            inputValue = ""
-                        }
-                    }
-                }
-            }
-        )
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        Button(
-            onClick = {
-                val employee = employeeNumber
-                val workOrder = workOrderNumber
-                if (employee == null) {
-                    Toast.makeText(context, "Ingrese un número de empleado", Toast.LENGTH_SHORT).show()
-                    return@Button
-                }
-                if (workOrder == null) {
-                    Toast.makeText(context, "Ingrese un número de Work Order", Toast.LENGTH_SHORT).show()
-                    return@Button
-                }
-
-                val updatedSet = workOrdersStates[employee]?.toMutableSet() ?: mutableSetOf()
-                updatedSet.add(workOrder)
-                workOrdersStates[employee] = updatedSet
-
-                Toast.makeText(
-                    context,
-                    "Employee $employee Clocked In on WO $workOrder",
-                    Toast.LENGTH_SHORT
-                ).show()
-            },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(72.dp)
-        ) {
-            Text(text = "Clock In WO", style = MaterialTheme.typography.titleLarge)
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Button(
-            onClick = {
-                val employee = employeeNumber
-                val workOrder = workOrderNumber
-                if (employee == null) {
-                    Toast.makeText(context, "Ingrese un número de empleado", Toast.LENGTH_SHORT).show()
-                    return@Button
-                }
-                if (workOrder == null) {
-                    Toast.makeText(context, "Ingrese un número de Work Order", Toast.LENGTH_SHORT).show()
-                    return@Button
-                }
-
-                val existingSet = workOrdersStates[employee]
-                if (existingSet != null) {
-                    val updatedSet = existingSet.toMutableSet()
-                    updatedSet.remove(workOrder)
-                    if (updatedSet.isEmpty()) {
-                        workOrdersStates.remove(employee)
-                    } else {
-                        workOrdersStates[employee] = updatedSet
-                    }
-                }
-
-                Toast.makeText(
-                    context,
-                    "Employee $employee Clocked Out from WO $workOrder",
-                    Toast.LENGTH_SHORT
-                ).show()
-            },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(72.dp)
-        ) {
-            Text(text = "Clock Out WO", style = MaterialTheme.typography.titleLarge)
-        }
-    }
-}
-
-@Composable
-private fun IssueMaterialsScreen(
-    materialsStates: SnapshotStateMap<Int, MutableList<String>>,
-    modifier: Modifier = Modifier
-) {
-    val context = LocalContext.current
-    var inputValue by rememberSaveable { mutableStateOf("") }
-    var employeeNumber by rememberSaveable { mutableStateOf<Int?>(null) }
-    var materialCode by rememberSaveable { mutableStateOf<String?>(null) }
-    var currentField by rememberSaveable { mutableStateOf(MaterialInputField.EMPLOYEE) }
-
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(24.dp),
-        verticalArrangement = Arrangement.Top,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(
-            text = "Issue Materials",
-            style = MaterialTheme.typography.headlineSmall,
-            modifier = Modifier.align(Alignment.Start)
-        )
-        Spacer(modifier = Modifier.height(24.dp))
-        DisplayValue(label = "Employee", value = employeeNumber?.toString().orEmpty())
-        Spacer(modifier = Modifier.height(8.dp))
-        DisplayValue(label = "Material", value = materialCode.orEmpty())
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = when (currentField) {
-                MaterialInputField.EMPLOYEE -> "Ingresando Employee Number"
-                MaterialInputField.MATERIAL -> "Ingresando Material Code"
-            },
-            style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.align(Alignment.Start)
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-
-        KeypadPanel(
-            modifier = Modifier.fillMaxWidth(),
-            inputValue = inputValue,
-            onNumberClick = { digit -> inputValue += digit },
-            onClear = { inputValue = "" },
-            onEnter = {
-                when (currentField) {
-                    MaterialInputField.EMPLOYEE -> {
-                        val employee = inputValue.toIntOrNull()
-                        if (employee == null) {
-                            Toast.makeText(context, "Ingrese un número de empleado", Toast.LENGTH_SHORT)
-                                .show()
-                        } else {
-                            employeeNumber = employee
-                            currentField = MaterialInputField.MATERIAL
-                            inputValue = ""
-                        }
-                    }
-
-                    MaterialInputField.MATERIAL -> {
-                        if (inputValue.isEmpty()) {
-                            Toast.makeText(context, "Ingrese un código de material", Toast.LENGTH_SHORT)
-                                .show()
-                        } else {
-                            materialCode = inputValue
-                            currentField = MaterialInputField.EMPLOYEE
-                            inputValue = ""
-                        }
-                    }
-                }
-            }
-        )
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        Button(
-            onClick = {
-                val employee = employeeNumber
-                val material = materialCode
-                if (employee == null) {
-                    Toast.makeText(context, "Ingrese un número de empleado", Toast.LENGTH_SHORT).show()
-                    return@Button
-                }
-                if (material.isNullOrEmpty()) {
-                    Toast.makeText(context, "Ingrese un código de material", Toast.LENGTH_SHORT).show()
-                    return@Button
-                }
-
-                val updatedList = materialsStates[employee]?.toMutableList() ?: mutableListOf()
-                updatedList.add(material)
-                materialsStates[employee] = updatedList
-
-                Toast.makeText(
-                    context,
-                    "Employee $employee issued Material $material",
-                    Toast.LENGTH_SHORT
-                ).show()
-
-                materialCode = null
-            },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(72.dp)
-        ) {
-            Text(text = "Issue Material", style = MaterialTheme.typography.titleLarge)
-        }
-    }
-}
-
-@Composable
-private fun DisplayValue(label: String, value: String) {
-    Text(
-        text = "$label: ${value.ifEmpty { "--" }}",
-        style = MaterialTheme.typography.titleLarge,
-        modifier = Modifier.fillMaxWidth(),
-        textAlign = TextAlign.Start
-    )
 }
 
 private val LoginStateSaver:
