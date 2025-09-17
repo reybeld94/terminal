@@ -34,6 +34,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.terminal.ui.theme.TerminalTheme
+import java.util.ArrayList
 
 @Composable
 fun TerminalApp() {
@@ -509,40 +510,51 @@ private fun DisplayValue(label: String, value: String) {
     )
 }
 
-private val LoginStateSaver: Saver<SnapshotStateMap<Int, Boolean>, Map<Int, Boolean>> = Saver(
-    save = { stateMap -> stateMap.toMap() },
-    restore = { restoredMap ->
-        mutableStateMapOf<Int, Boolean>().apply { putAll(restoredMap) }
-    }
-)
+private val LoginStateSaver:
+    Saver<SnapshotStateMap<Int, Boolean>, ArrayList<Pair<Int, Boolean>>> = Saver(
+        save = { stateMap ->
+            ArrayList(stateMap.map { it.key to it.value })
+        },
+        restore = { restoredList ->
+            mutableStateMapOf<Int, Boolean>().apply {
+                restoredList.forEach { (employee, isLoggedIn) ->
+                    this[employee] = isLoggedIn
+                }
+            }
+        }
+    )
 
 private val WorkOrdersStateSaver:
-    Saver<SnapshotStateMap<Int, MutableSet<Int>>, Map<Int, List<Int>>> = Saver(
-    save = { stateMap ->
-        stateMap.mapValues { it.value.toList() }
-    },
-    restore = { restoredMap ->
-        mutableStateMapOf<Int, MutableSet<Int>>().apply {
-            restoredMap.forEach { (employee, workOrders) ->
-                put(employee, workOrders.toMutableSet())
+    Saver<SnapshotStateMap<Int, MutableSet<Int>>, ArrayList<Pair<Int, ArrayList<Int>>>> = Saver(
+        save = { stateMap ->
+            ArrayList(stateMap.map { (employee, workOrders) ->
+                employee to ArrayList(workOrders)
+            })
+        },
+        restore = { restoredList ->
+            mutableStateMapOf<Int, MutableSet<Int>>().apply {
+                restoredList.forEach { (employee, workOrders) ->
+                    this[employee] = workOrders.toMutableSet()
+                }
             }
         }
-    }
-)
+    )
 
 private val MaterialsStateSaver:
-    Saver<SnapshotStateMap<Int, MutableList<String>>, Map<Int, List<String>>> = Saver(
-    save = { stateMap ->
-        stateMap.mapValues { it.value.toList() }
-    },
-    restore = { restoredMap ->
-        mutableStateMapOf<Int, MutableList<String>>().apply {
-            restoredMap.forEach { (employee, materials) ->
-                put(employee, materials.toMutableList())
+    Saver<SnapshotStateMap<Int, MutableList<String>>, ArrayList<Pair<Int, ArrayList<String>>>> = Saver(
+        save = { stateMap ->
+            ArrayList(stateMap.map { (employee, materials) ->
+                employee to ArrayList(materials)
+            })
+        },
+        restore = { restoredList ->
+            mutableStateMapOf<Int, MutableList<String>>().apply {
+                restoredList.forEach { (employee, materials) ->
+                    this[employee] = materials.toMutableList()
+                }
             }
         }
-    }
-)
+    )
 
 @Preview(showBackground = true, widthDp = 900, heightDp = 450)
 @Composable
