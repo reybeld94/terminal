@@ -12,8 +12,10 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -451,38 +453,38 @@ private fun NumericKeypad(
     onClear: () -> Unit,
     onEnter: () -> Unit
 ) {
-    Column(
-        modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+    Box(
+        modifier = modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
     ) {
-        val numberRows = listOf(
-            listOf("1", "2", "3"),
-            listOf("4", "5", "6"),
-            listOf("7", "8", "9")
+        val keypadItems = listOf(
+            "1" to { onNumberClick("1") },
+            "2" to { onNumberClick("2") },
+            "3" to { onNumberClick("3") },
+            "4" to { onNumberClick("4") },
+            "5" to { onNumberClick("5") },
+            "6" to { onNumberClick("6") },
+            "7" to { onNumberClick("7") },
+            "8" to { onNumberClick("8") },
+            "9" to { onNumberClick("9") },
+            "Clear" to onClear,
+            "0" to { onNumberClick("0") },
+            "Enter" to onEnter
         )
 
-        numberRows.forEach { row ->
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                row.forEach { number ->
-                    KeypadButton(
-                        label = number,
-                        onClick = { onNumberClick(number) }
-                    )
-                }
-            }
-        }
-
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-            verticalAlignment = Alignment.CenterVertically
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(3),
+            modifier = Modifier.fillMaxSize(),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            verticalArrangement = Arrangement.SpaceEvenly,
+            userScrollEnabled = false
         ) {
-            KeypadButton(label = "Clear", onClick = onClear)
-            KeypadButton(label = "0", onClick = { onNumberClick("0") })
-            KeypadButton(label = "Enter", onClick = onEnter)
+            items(keypadItems, key = { it.first }) { (label, action) ->
+                KeypadButton(
+                    label = label,
+                    onClick = action
+                )
+            }
         }
     }
 }
@@ -495,19 +497,22 @@ private fun KeypadButton(
 ) {
     Box(
         modifier = modifier
+            .fillMaxWidth()
+            .aspectRatio(1f)
+            .padding(8.dp)
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
         Image(
             painter = painterResource(id = R.drawable.button),
             contentDescription = null,
-            modifier = Modifier.size(90.dp),
-            contentScale = ContentScale.Fit
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.FillBounds
         )
         Text(
             text = label,
             color = Color.Black,
-            fontSize = 20.sp,
+            fontSize = 24.sp,
             textAlign = TextAlign.Center
         )
     }
