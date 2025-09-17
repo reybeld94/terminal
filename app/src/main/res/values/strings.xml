@@ -1,3 +1,16 @@
 <resources>
     <string name="app_name">Terminal</string>
+    <string name="clock_in_out">Clock In/Out</string>
+    <string name="work_orders">Work Orders</string>
+    <string name="issue_materials">Issue Materials</string>
+    <string name="main_menu_placeholder">Selecciona una opción del menú</string>
+    <string name="clock_in_out_screen">Pantalla Clock In/Out</string>
+    <string name="work_orders_screen">Pantalla Work Orders</string>
+    <string name="issue_materials_screen">Pantalla Issue Materials</string>
+    <string name="clock_in_out_display_placeholder">Ingresa número de empleado</string>
+    <string name="clear">Borrar</string>
+    <string name="enter">Enter</string>
+    <string name="toast_clock_in_success">Clock In Successful</string>
+    <string name="toast_clock_out_success">Clock Out Successful</string>
+    <string name="toast_enter_employee_number">Ingresa un número de empleado</string>
 </resources>
