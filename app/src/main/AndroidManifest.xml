@@ -12,6 +12,15 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Terminal">
         <activity
+            android:name=".IssueMaterialsActivity"
+            android:exported="false" />
+        <activity
+            android:name=".WorkOrdersActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ClockInOutActivity"
+            android:exported="false" />
+        <activity
             android:name=".MainActivity"
             android:exported="true"
             android:label="@string/app_name"
