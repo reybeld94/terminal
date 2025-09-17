@@ -477,9 +477,9 @@ private fun NumericKeypad(
             columns = GridCells.Fixed(3),
             modifier = Modifier
                 .fillMaxSize()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceEvenly,
-            verticalArrangement = Arrangement.SpaceEvenly,
+                .padding(24.dp),
+            verticalArrangement = Arrangement.spacedBy(24.dp),
+            horizontalArrangement = Arrangement.spacedBy(24.dp),
             userScrollEnabled = false
         ) {
             items(keypadItems, key = { it.first }) { (label, action) ->
@@ -500,9 +500,8 @@ private fun KeypadButton(
 ) {
     Box(
         modifier = modifier
-            .fillMaxWidth()
             .aspectRatio(1f)
-            .padding(8.dp)
+            .fillMaxSize(fraction = 0.9f)
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
@@ -515,7 +514,7 @@ private fun KeypadButton(
         Text(
             text = label,
             color = Color.Black,
-            fontSize = 26.sp,
+            fontSize = 28.sp,
             textAlign = TextAlign.Center
         )
     }
