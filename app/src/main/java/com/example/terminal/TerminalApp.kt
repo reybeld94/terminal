@@ -475,7 +475,9 @@ private fun NumericKeypad(
 
         LazyVerticalGrid(
             columns = GridCells.Fixed(3),
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
             horizontalArrangement = Arrangement.SpaceEvenly,
             verticalArrangement = Arrangement.SpaceEvenly,
             userScrollEnabled = false
@@ -508,12 +510,12 @@ private fun KeypadButton(
             painter = painterResource(id = R.drawable.button),
             contentDescription = null,
             modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.FillBounds
+            contentScale = ContentScale.Fit
         )
         Text(
             text = label,
             color = Color.Black,
-            fontSize = 24.sp,
+            fontSize = 26.sp,
             textAlign = TextAlign.Center
         )
     }
