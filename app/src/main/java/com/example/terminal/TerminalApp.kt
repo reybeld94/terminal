@@ -2,6 +2,7 @@ package com.example.terminal
 
 import android.widget.Toast
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -13,10 +14,13 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -24,7 +28,6 @@ import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.TabRowDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.tabIndicatorOffset
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
@@ -69,11 +72,22 @@ fun TerminalApp() {
                 selectedTabIndex = selectedIndex,
                 containerColor = Color(0xFFF5F5F5),
                 indicator = { tabPositions ->
-                    TabRowDefaults.Indicator(
-                        modifier = Modifier.tabIndicatorOffset(tabPositions[selectedIndex]),
-                        height = 3.dp,
-                        color = Color(0xFF2196F3)
-                    )
+                    if (tabPositions.isNotEmpty()) {
+                        val currentTabPosition = tabPositions[selectedIndex]
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .wrapContentSize(Alignment.BottomStart)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .offset(x = currentTabPosition.left)
+                                    .width(currentTabPosition.right - currentTabPosition.left)
+                                    .height(3.dp)
+                                    .background(Color(0xFF2196F3))
+                            )
+                        }
+                    }
                 }
             ) {
                 tabs.forEachIndexed { index, tab ->
