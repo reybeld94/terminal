@@ -104,10 +104,8 @@ fun TerminalApp() {
                                 color = if (isSelected) Color(0xFF000000) else Color(0xFF888888)
                             )
                         },
-                        colors = TabRowDefaults.tabColors(
-                            selectedContentColor = Color(0xFF000000),
-                            unselectedContentColor = Color(0xFF888888)
-                        )
+                        selectedContentColor = Color(0xFF000000),
+                        unselectedContentColor = Color(0xFF888888)
                     )
                 }
             }
