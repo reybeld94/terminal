@@ -1,9 +1,6 @@
 package com.example.terminal
 
 import android.widget.Toast
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,19 +11,19 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.TabRowDefaults
+import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -38,10 +35,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -70,23 +64,13 @@ fun TerminalApp() {
             val selectedIndex = tabs.indexOf(selectedTab)
             TabRow(
                 selectedTabIndex = selectedIndex,
-                containerColor = Color(0xFFF5F5F5),
+                containerColor = MaterialTheme.colorScheme.background,
                 indicator = { tabPositions ->
                     if (tabPositions.isNotEmpty()) {
-                        val currentTabPosition = tabPositions[selectedIndex]
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .wrapContentSize(Alignment.BottomStart)
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .offset(x = currentTabPosition.left)
-                                    .width(currentTabPosition.right - currentTabPosition.left)
-                                    .height(3.dp)
-                                    .background(Color(0xFF2196F3))
-                            )
-                        }
+                        TabRowDefaults.Indicator(
+                            modifier = Modifier.tabIndicatorOffset(tabPositions[selectedIndex]),
+                            color = MaterialTheme.colorScheme.primary
+                        )
                     }
                 }
             ) {
@@ -101,11 +85,15 @@ fun TerminalApp() {
                                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
                                 fontSize = 16.sp,
                                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                                color = if (isSelected) Color(0xFF000000) else Color(0xFF888888)
+                                color = if (isSelected) {
+                                    MaterialTheme.colorScheme.onSurface
+                                } else {
+                                    MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                                }
                             )
                         },
-                        selectedContentColor = Color(0xFF000000),
-                        unselectedContentColor = Color(0xFF888888)
+                        selectedContentColor = MaterialTheme.colorScheme.onSurface,
+                        unselectedContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                     )
                 }
             }
@@ -158,7 +146,8 @@ private fun ClockTabContent(
         ) {
             Text(
                 text = "Clock In/Out",
-                style = MaterialTheme.typography.headlineSmall
+                style = MaterialTheme.typography.headlineSmall,
+                color = MaterialTheme.colorScheme.onSurface
             )
             Spacer(modifier = Modifier.height(24.dp))
             DisplayValue(
@@ -173,7 +162,8 @@ private fun ClockTabContent(
             Spacer(modifier = Modifier.height(16.dp))
             Text(
                 text = "Ingrese el número de empleado y presione Enter para clock in/out.",
-                style = MaterialTheme.typography.bodyLarge
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurface
             )
         }
 
@@ -236,7 +226,8 @@ private fun WorkOrdersTabContent(
         ) {
             Text(
                 text = "Work Orders",
-                style = MaterialTheme.typography.headlineSmall
+                style = MaterialTheme.typography.headlineSmall,
+                color = MaterialTheme.colorScheme.onSurface
             )
             Spacer(modifier = Modifier.height(24.dp))
             DisplayValue(label = "Employee", value = employeeNumber?.toString().orEmpty())
@@ -245,7 +236,8 @@ private fun WorkOrdersTabContent(
             Spacer(modifier = Modifier.height(16.dp))
             Text(
                 text = instructionText,
-                style = MaterialTheme.typography.bodyLarge
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurface
             )
             Spacer(modifier = Modifier.height(24.dp))
             Button(
@@ -273,9 +265,17 @@ private fun WorkOrdersTabContent(
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(72.dp)
+                    .height(72.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                )
             ) {
-                Text(text = "Clock In WO", style = MaterialTheme.typography.titleLarge)
+                Text(
+                    text = "Clock In WO",
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.onPrimary
+                )
             }
             Spacer(modifier = Modifier.height(16.dp))
             Button(
@@ -310,9 +310,17 @@ private fun WorkOrdersTabContent(
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(72.dp)
+                    .height(72.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                )
             ) {
-                Text(text = "Clock Out WO", style = MaterialTheme.typography.titleLarge)
+                Text(
+                    text = "Clock Out WO",
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.onPrimary
+                )
             }
         }
 
@@ -387,7 +395,8 @@ private fun IssueMaterialsTabContent(
         ) {
             Text(
                 text = "Issue Materials",
-                style = MaterialTheme.typography.headlineSmall
+                style = MaterialTheme.typography.headlineSmall,
+                color = MaterialTheme.colorScheme.onSurface
             )
             Spacer(modifier = Modifier.height(24.dp))
             DisplayValue(label = "Employee", value = employeeNumber?.toString().orEmpty())
@@ -396,7 +405,8 @@ private fun IssueMaterialsTabContent(
             Spacer(modifier = Modifier.height(16.dp))
             Text(
                 text = instructionText,
-                style = MaterialTheme.typography.bodyLarge
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurface
             )
             Spacer(modifier = Modifier.height(24.dp))
             Button(
@@ -426,9 +436,17 @@ private fun IssueMaterialsTabContent(
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(72.dp)
+                    .height(72.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                )
             ) {
-                Text(text = "Issue Material", style = MaterialTheme.typography.titleLarge)
+                Text(
+                    text = "Issue Material",
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.onPrimary
+                )
             }
         }
 
@@ -481,7 +499,8 @@ private fun DisplayValue(label: String, value: String) {
         text = "$label: ${value.ifEmpty { "--" }}",
         style = MaterialTheme.typography.titleLarge,
         modifier = Modifier.fillMaxWidth(),
-        textAlign = TextAlign.Start
+        textAlign = TextAlign.Start,
+        color = MaterialTheme.colorScheme.onSurface
     )
 }
 
@@ -536,25 +555,27 @@ private fun KeypadButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Box(
+    Surface(
         modifier = modifier
             .aspectRatio(1f)
-            .fillMaxSize(fraction = 0.9f)
-            .clickable(onClick = onClick),
-        contentAlignment = Alignment.Center
+            .fillMaxSize(fraction = 0.9f),
+        shape = RoundedCornerShape(12.dp),
+        color = MaterialTheme.colorScheme.primary,
+        contentColor = MaterialTheme.colorScheme.onPrimary,
+        shadowElevation = 4.dp,
+        onClick = onClick
     ) {
-        Image(
-            painter = painterResource(id = R.drawable.button),
-            contentDescription = null,
+        Box(
             modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Fit
-        )
-        Text(
-            text = label,
-            color = Color.Black,
-            fontSize = 28.sp,
-            textAlign = TextAlign.Center
-        )
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = label,
+                fontSize = 28.sp,
+                textAlign = TextAlign.Center,
+                color = MaterialTheme.colorScheme.onPrimary
+            )
+        }
     }
 }
 

@@ -2,11 +2,13 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/terminal_background"
     android:fillViewport="true">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:background="@color/terminal_background"
         android:gravity="center_horizontal"
         android:orientation="vertical"
         android:padding="24dp">
@@ -19,6 +21,7 @@
             android:gravity="center"
             android:text="@string/issue_materials_screen"
             android:textAppearance="@android:style/TextAppearance.Large"
+            android:textColor="@color/terminal_on_background"
             android:textStyle="bold" />
 
         <TextView
@@ -29,6 +32,7 @@
             android:gravity="center"
             android:text="@string/issue_materials_active_employee"
             android:textAppearance="@android:style/TextAppearance.Medium"
+            android:textColor="@color/terminal_on_background"
             android:textStyle="bold" />
 
         <LinearLayout
@@ -43,19 +47,21 @@
                 android:layout_height="wrap_content"
                 android:text="@string/issue_materials_employee_label"
                 android:textAppearance="@android:style/TextAppearance.Small"
+                android:textColor="@color/terminal_on_background"
                 android:textStyle="bold" />
 
             <TextView
                 android:id="@+id/textIssueEmployeeValue"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="@android:drawable/editbox_background"
+                android:background="@drawable/input_field_background"
                 android:clickable="true"
                 android:focusable="true"
                 android:gravity="center"
                 android:padding="16dp"
                 android:text="@string/default_input_placeholder"
                 android:textAppearance="@android:style/TextAppearance.Large"
+                android:textColor="@color/terminal_on_background"
                 android:textStyle="bold" />
         </LinearLayout>
 
@@ -71,19 +77,21 @@
                 android:layout_height="wrap_content"
                 android:text="@string/issue_materials_material_label"
                 android:textAppearance="@android:style/TextAppearance.Small"
+                android:textColor="@color/terminal_on_background"
                 android:textStyle="bold" />
 
             <TextView
                 android:id="@+id/textMaterialValue"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="@android:drawable/editbox_background"
+                android:background="@drawable/input_field_background"
                 android:clickable="true"
                 android:focusable="true"
                 android:gravity="center"
                 android:padding="16dp"
                 android:text="@string/default_input_placeholder"
                 android:textAppearance="@android:style/TextAppearance.Large"
+                android:textColor="@color/terminal_on_background"
                 android:textStyle="bold" />
         </LinearLayout>
 
@@ -107,6 +115,7 @@
                 android:minHeight="96dp"
                 android:minWidth="0dp"
                 android:text="1"
+                android:textColor="@color/terminal_on_background"
                 android:textSize="24sp" />
 
             <Button
@@ -119,6 +128,7 @@
                 android:minHeight="96dp"
                 android:minWidth="0dp"
                 android:text="2"
+                android:textColor="@color/terminal_on_background"
                 android:textSize="24sp" />
 
             <Button
@@ -131,6 +141,7 @@
                 android:minHeight="96dp"
                 android:minWidth="0dp"
                 android:text="3"
+                android:textColor="@color/terminal_on_background"
                 android:textSize="24sp" />
 
             <Button
@@ -143,6 +154,7 @@
                 android:minHeight="96dp"
                 android:minWidth="0dp"
                 android:text="4"
+                android:textColor="@color/terminal_on_background"
                 android:textSize="24sp" />
 
             <Button
@@ -155,6 +167,7 @@
                 android:minHeight="96dp"
                 android:minWidth="0dp"
                 android:text="5"
+                android:textColor="@color/terminal_on_background"
                 android:textSize="24sp" />
 
             <Button
@@ -167,6 +180,7 @@
                 android:minHeight="96dp"
                 android:minWidth="0dp"
                 android:text="6"
+                android:textColor="@color/terminal_on_background"
                 android:textSize="24sp" />
 
             <Button
@@ -179,6 +193,7 @@
                 android:minHeight="96dp"
                 android:minWidth="0dp"
                 android:text="7"
+                android:textColor="@color/terminal_on_background"
                 android:textSize="24sp" />
 
             <Button
@@ -191,6 +206,7 @@
                 android:minHeight="96dp"
                 android:minWidth="0dp"
                 android:text="8"
+                android:textColor="@color/terminal_on_background"
                 android:textSize="24sp" />
 
             <Button
@@ -203,6 +219,7 @@
                 android:minHeight="96dp"
                 android:minWidth="0dp"
                 android:text="9"
+                android:textColor="@color/terminal_on_background"
                 android:textSize="24sp" />
 
             <Button
@@ -214,6 +231,7 @@
                 android:minHeight="96dp"
                 android:minWidth="0dp"
                 android:text="@string/clear"
+                android:textColor="@color/terminal_on_background"
                 android:textSize="20sp" />
 
             <Button
@@ -226,6 +244,7 @@
                 android:minHeight="96dp"
                 android:minWidth="0dp"
                 android:text="0"
+                android:textColor="@color/terminal_on_background"
                 android:textSize="24sp" />
 
             <Button
@@ -237,6 +256,7 @@
                 android:minHeight="96dp"
                 android:minWidth="0dp"
                 android:text="@string/enter"
+                android:textColor="@color/terminal_on_background"
                 android:textSize="20sp" />
         </GridLayout>
 
@@ -244,8 +264,10 @@
             android:id="@+id/buttonIssueMaterial"
             android:layout_width="match_parent"
             android:layout_height="72dp"
+            android:background="@drawable/rounded_button_background"
             android:text="@string/button_issue_material"
             android:textAllCaps="false"
+            android:textColor="@color/terminal_on_background"
             android:textSize="20sp" />
     </LinearLayout>
 </ScrollView>
