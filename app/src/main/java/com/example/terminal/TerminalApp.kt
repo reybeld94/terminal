@@ -42,6 +42,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.terminal.ui.theme.TerminalTheme
+import com.example.terminal.ui.workorders.WorkOrdersScreen
 import java.util.ArrayList
 
 @Composable
@@ -49,9 +50,6 @@ fun TerminalApp() {
     val tabs = TerminalTab.values()
     var selectedTab by rememberSaveable { mutableStateOf(TerminalTab.CLOCK) }
     val loginStates = rememberSaveable(saver = LoginStateSaver) { mutableStateMapOf<Int, Boolean>() }
-    val workOrdersStates = rememberSaveable(saver = WorkOrdersStateSaver) {
-        mutableStateMapOf<Int, MutableSet<Int>>()
-    }
     val materialsStates = rememberSaveable(saver = MaterialsStateSaver) {
         mutableStateMapOf<Int, MutableList<String>>()
     }
@@ -105,10 +103,7 @@ fun TerminalApp() {
                         modifier = Modifier.fillMaxSize()
                     )
 
-                    TerminalTab.WORK_ORDERS -> WorkOrdersTabContent(
-                        workOrdersStates = workOrdersStates,
-                        modifier = Modifier.fillMaxSize()
-                    )
+                    TerminalTab.WORK_ORDERS -> WorkOrdersScreen()
 
                     TerminalTab.ISSUE_MATERIALS -> IssueMaterialsTabContent(
                         materialsStates = materialsStates,
@@ -190,179 +185,6 @@ private fun ClockTabContent(
                     lastEmployee = employeeNumber
                 }
                 inputValue = ""
-            }
-        )
-    }
-}
-
-private enum class WorkOrderInputField { EMPLOYEE, WORK_ORDER }
-
-private enum class MaterialInputField { EMPLOYEE, MATERIAL }
-
-@Composable
-private fun WorkOrdersTabContent(
-    workOrdersStates: SnapshotStateMap<Int, MutableSet<Int>>,
-    modifier: Modifier = Modifier
-) {
-    val context = LocalContext.current
-    var inputValue by rememberSaveable { mutableStateOf("") }
-    var employeeNumber by rememberSaveable { mutableStateOf<Int?>(null) }
-    var workOrderNumber by rememberSaveable { mutableStateOf<Int?>(null) }
-    var currentField by rememberSaveable { mutableStateOf(WorkOrderInputField.EMPLOYEE) }
-
-    val instructionText = when (currentField) {
-        WorkOrderInputField.EMPLOYEE -> "Ingrese o escanee el número de empleado y presione Enter."
-        WorkOrderInputField.WORK_ORDER -> "Ingrese o escanee el número de Work Order y presione Enter."
-    }
-
-    Row(modifier = modifier.fillMaxSize()) {
-        Column(
-            modifier = Modifier
-                .weight(0.6f)
-                .fillMaxHeight()
-                .padding(24.dp),
-            verticalArrangement = Arrangement.Top,
-            horizontalAlignment = Alignment.Start
-        ) {
-            Text(
-                text = "Work Orders",
-                style = MaterialTheme.typography.headlineSmall,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            Spacer(modifier = Modifier.height(24.dp))
-            DisplayValue(label = "Employee", value = employeeNumber?.toString().orEmpty())
-            Spacer(modifier = Modifier.height(8.dp))
-            DisplayValue(label = "Work Order", value = workOrderNumber?.toString().orEmpty())
-            Spacer(modifier = Modifier.height(16.dp))
-            Text(
-                text = instructionText,
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            Spacer(modifier = Modifier.height(24.dp))
-            Button(
-                onClick = {
-                    val employee = employeeNumber
-                    val workOrder = workOrderNumber
-                    if (employee == null) {
-                        Toast.makeText(context, "Ingrese un número de empleado", Toast.LENGTH_SHORT).show()
-                        return@Button
-                    }
-                    if (workOrder == null) {
-                        Toast.makeText(context, "Ingrese un número de Work Order", Toast.LENGTH_SHORT).show()
-                        return@Button
-                    }
-
-                    val updatedSet = workOrdersStates[employee]?.toMutableSet() ?: mutableSetOf()
-                    updatedSet.add(workOrder)
-                    workOrdersStates[employee] = updatedSet
-
-                    Toast.makeText(
-                        context,
-                        "Employee $employee Clocked In on WO $workOrder",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(72.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary
-                )
-            ) {
-                Text(
-                    text = "Clock In WO",
-                    style = MaterialTheme.typography.titleLarge,
-                    color = MaterialTheme.colorScheme.onPrimary
-                )
-            }
-            Spacer(modifier = Modifier.height(16.dp))
-            Button(
-                onClick = {
-                    val employee = employeeNumber
-                    val workOrder = workOrderNumber
-                    if (employee == null) {
-                        Toast.makeText(context, "Ingrese un número de empleado", Toast.LENGTH_SHORT).show()
-                        return@Button
-                    }
-                    if (workOrder == null) {
-                        Toast.makeText(context, "Ingrese un número de Work Order", Toast.LENGTH_SHORT).show()
-                        return@Button
-                    }
-
-                    val existingSet = workOrdersStates[employee]
-                    if (existingSet != null) {
-                        val updatedSet = existingSet.toMutableSet()
-                        updatedSet.remove(workOrder)
-                        if (updatedSet.isEmpty()) {
-                            workOrdersStates.remove(employee)
-                        } else {
-                            workOrdersStates[employee] = updatedSet
-                        }
-                    }
-
-                    Toast.makeText(
-                        context,
-                        "Employee $employee Clocked Out from WO $workOrder",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(72.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary
-                )
-            ) {
-                Text(
-                    text = "Clock Out WO",
-                    style = MaterialTheme.typography.titleLarge,
-                    color = MaterialTheme.colorScheme.onPrimary
-                )
-            }
-        }
-
-        NumericKeypad(
-            modifier = Modifier
-                .weight(0.4f)
-                .fillMaxHeight()
-                .padding(24.dp),
-            onNumberClick = { digit -> inputValue += digit },
-            onClear = { inputValue = "" },
-            onEnter = {
-                when (currentField) {
-                    WorkOrderInputField.EMPLOYEE -> {
-                        val employee = inputValue.toIntOrNull()
-                        if (employee == null) {
-                            Toast.makeText(
-                                context,
-                                "Ingrese un número de empleado",
-                                Toast.LENGTH_SHORT
-                            ).show()
-                        } else {
-                            employeeNumber = employee
-                            currentField = WorkOrderInputField.WORK_ORDER
-                            inputValue = ""
-                        }
-                    }
-
-                    WorkOrderInputField.WORK_ORDER -> {
-                        val workOrder = inputValue.toIntOrNull()
-                        if (workOrder == null) {
-                            Toast.makeText(
-                                context,
-                                "Ingrese un número de Work Order",
-                                Toast.LENGTH_SHORT
-                            ).show()
-                        } else {
-                            workOrderNumber = workOrder
-                            currentField = WorkOrderInputField.EMPLOYEE
-                            inputValue = ""
-                        }
-                    }
-                }
             }
         )
     }
@@ -588,22 +410,6 @@ private val LoginStateSaver:
             mutableStateMapOf<Int, Boolean>().apply {
                 restoredList.forEach { (employee, isLoggedIn) ->
                     this[employee] = isLoggedIn
-                }
-            }
-        }
-    )
-
-private val WorkOrdersStateSaver:
-    Saver<SnapshotStateMap<Int, MutableSet<Int>>, ArrayList<Pair<Int, ArrayList<Int>>>> = Saver(
-        save = { stateMap ->
-            ArrayList(stateMap.map { (employee, workOrders) ->
-                employee to ArrayList(workOrders)
-            })
-        },
-        restore = { restoredList ->
-            mutableStateMapOf<Int, MutableSet<Int>>().apply {
-                restoredList.forEach { (employee, workOrders) ->
-                    this[employee] = workOrders.toMutableSet()
                 }
             }
         }

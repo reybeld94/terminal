@@ -1,0 +1,213 @@
+package com.example.terminal.ui.workorders
+
+import android.content.Context
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewModelScope
+import com.example.terminal.data.local.UserPrefs
+import com.example.terminal.data.network.ApiClient
+import com.example.terminal.data.network.ClockOutStatus
+import com.example.terminal.data.repository.WorkOrdersRepository
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+
+private const val DEFAULT_CLOCK_IN_QTY = 1
+
+enum class WorkOrderInputField {
+    EMPLOYEE,
+    WORK_ORDER
+}
+
+data class WorkOrdersUiState(
+    val employeeId: String = "",
+    val workOrderId: String = "",
+    val activeField: WorkOrderInputField = WorkOrderInputField.EMPLOYEE,
+    val isLoading: Boolean = false,
+    val snackbarMessage: String? = null,
+    val showClockOutDialog: Boolean = false
+)
+
+class WorkOrdersViewModel(
+    private val repository: WorkOrdersRepository,
+    private val userPrefs: UserPrefs
+) : ViewModel() {
+
+    private val _uiState = MutableStateFlow(WorkOrdersUiState())
+    val uiState: StateFlow<WorkOrdersUiState> = _uiState.asStateFlow()
+
+    private var saveEmployeeJob: Job? = null
+
+    init {
+        viewModelScope.launch {
+            userPrefs.lastEmployeeId.collectLatest { storedEmployee ->
+                if (!storedEmployee.isNullOrBlank()) {
+                    _uiState.update { current ->
+                        if (current.employeeId.isBlank()) {
+                            current.copy(employeeId = storedEmployee)
+                        } else {
+                            current
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    fun onEmployeeFieldSelected() {
+        _uiState.update { it.copy(activeField = WorkOrderInputField.EMPLOYEE) }
+    }
+
+    fun onWorkOrderFieldSelected() {
+        _uiState.update { it.copy(activeField = WorkOrderInputField.WORK_ORDER) }
+    }
+
+    fun setDigit(digit: String) {
+        require(digit.length == 1 && digit[0].isDigit())
+        when (_uiState.value.activeField) {
+            WorkOrderInputField.EMPLOYEE -> updateEmployeeId(_uiState.value.employeeId + digit)
+            WorkOrderInputField.WORK_ORDER -> updateWorkOrderId(_uiState.value.workOrderId + digit)
+        }
+    }
+
+    fun clear() {
+        when (_uiState.value.activeField) {
+            WorkOrderInputField.EMPLOYEE -> {
+                val updated = _uiState.value.employeeId.dropLast(1)
+                updateEmployeeId(updated)
+            }
+
+            WorkOrderInputField.WORK_ORDER -> {
+                val updated = _uiState.value.workOrderId.dropLast(1)
+                updateWorkOrderId(updated)
+            }
+        }
+    }
+
+    fun enter() {
+        val nextField = when (_uiState.value.activeField) {
+            WorkOrderInputField.EMPLOYEE -> WorkOrderInputField.WORK_ORDER
+            WorkOrderInputField.WORK_ORDER -> WorkOrderInputField.EMPLOYEE
+        }
+        _uiState.update { it.copy(activeField = nextField) }
+    }
+
+    fun onClockIn() {
+        val employee = _uiState.value.employeeId.trim()
+        val workOrder = _uiState.value.workOrderId.trim()
+
+        if (employee.isEmpty() || workOrder.isEmpty()) {
+            showMessage("Employee # y Work Order # son requeridos")
+            return
+        }
+
+        val employeeId = employee.toIntOrNull()
+        val workOrderId = workOrder.toIntOrNull()
+        if (employeeId == null || workOrderId == null) {
+            showMessage("Ingrese valores numéricos válidos")
+            return
+        }
+
+        setLoading(true)
+        viewModelScope.launch {
+            repository.clockIn(workOrderId, employeeId, DEFAULT_CLOCK_IN_QTY)
+                .onSuccess { response ->
+                    showMessage(response.message)
+                }
+                .onFailure { error ->
+                    showMessage(error.message ?: "Error al registrar Clock In")
+                }
+            setLoading(false)
+        }
+    }
+
+    fun onClockOutClick() {
+        val employee = _uiState.value.employeeId.trim()
+        val workOrder = _uiState.value.workOrderId.trim()
+        if (employee.isEmpty() || workOrder.isEmpty()) {
+            showMessage("Employee # y Work Order # son requeridos")
+            return
+        }
+        _uiState.update { it.copy(showClockOutDialog = true) }
+    }
+
+    fun onClockOut(qty: String, status: ClockOutStatus) {
+        val employee = _uiState.value.employeeId.trim()
+        val workOrder = _uiState.value.workOrderId.trim()
+
+        val quantity = qty.toIntOrNull()
+        if (quantity == null || quantity <= 0) {
+            showMessage("Ingrese una cantidad válida mayor a 0")
+            return
+        }
+
+        val employeeId = employee.toIntOrNull()
+        val workOrderId = workOrder.toIntOrNull()
+        if (employeeId == null || workOrderId == null) {
+            showMessage("Ingrese valores numéricos válidos")
+            return
+        }
+
+        setLoading(true)
+        _uiState.update { it.copy(showClockOutDialog = false) }
+        viewModelScope.launch {
+            repository.clockOut(workOrderId, employeeId, quantity, status)
+                .onSuccess { response ->
+                    showMessage(response.message)
+                }
+                .onFailure { error ->
+                    showMessage(error.message ?: "Error al registrar Clock Out")
+                }
+            setLoading(false)
+        }
+    }
+
+    fun dismissClockOutDialog() {
+        _uiState.update { it.copy(showClockOutDialog = false) }
+    }
+
+    fun dismissSnackbar() {
+        _uiState.update { it.copy(snackbarMessage = null) }
+    }
+
+    private fun updateEmployeeId(value: String) {
+        _uiState.update { it.copy(employeeId = value) }
+        saveEmployeeJob?.cancel()
+        if (value.isNotBlank()) {
+            saveEmployeeJob = viewModelScope.launch {
+                userPrefs.saveLastEmployeeId(value)
+            }
+        }
+    }
+
+    private fun updateWorkOrderId(value: String) {
+        _uiState.update { it.copy(workOrderId = value) }
+    }
+
+    private fun showMessage(message: String) {
+        _uiState.update { it.copy(snackbarMessage = message) }
+    }
+
+    private fun setLoading(loading: Boolean) {
+        _uiState.update { it.copy(isLoading = loading) }
+    }
+
+    companion object {
+        fun provideFactory(context: Context): ViewModelProvider.Factory {
+            val appContext = context.applicationContext
+            return object : ViewModelProvider.Factory {
+                @Suppress("UNCHECKED_CAST")
+                override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                    val apiService = ApiClient.getApiService()
+                    val repository = WorkOrdersRepository(apiService)
+                    val userPrefs = UserPrefs.create(appContext)
+                    return WorkOrdersViewModel(repository, userPrefs) as T
+                }
+            }
+        }
+    }
+}
