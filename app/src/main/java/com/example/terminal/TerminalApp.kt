@@ -16,19 +16,30 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.TabRowDefaults
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -41,17 +52,29 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.terminal.data.local.UserPrefs
+import com.example.terminal.data.network.ApiClient
 import com.example.terminal.ui.theme.TerminalTheme
 import com.example.terminal.ui.workorders.WorkOrdersScreen
 import java.util.ArrayList
+import kotlinx.coroutines.launch
 
 @Composable
 fun TerminalApp() {
+    val context = LocalContext.current
     val tabs = TerminalTab.values()
     var selectedTab by rememberSaveable { mutableStateOf(TerminalTab.CLOCK) }
     val loginStates = rememberSaveable(saver = LoginStateSaver) { mutableStateMapOf<Int, Boolean>() }
     val materialsStates = rememberSaveable(saver = MaterialsStateSaver) {
         mutableStateMapOf<Int, MutableList<String>>()
+    }
+    val userPrefs = remember { UserPrefs.create(context) }
+    val serverAddress by userPrefs.serverAddress.collectAsState(initial = ApiClient.DEFAULT_BASE_URL)
+    var showSettingsDialog by rememberSaveable { mutableStateOf(false) }
+    val coroutineScope = rememberCoroutineScope()
+
+    LaunchedEffect(serverAddress) {
+        ApiClient.updateBaseUrl(serverAddress)
     }
 
     Surface(
@@ -60,38 +83,53 @@ fun TerminalApp() {
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
             val selectedIndex = tabs.indexOf(selectedTab)
-            TabRow(
-                selectedTabIndex = selectedIndex,
-                containerColor = MaterialTheme.colorScheme.background,
-                indicator = { tabPositions ->
-                    if (tabPositions.isNotEmpty()) {
-                        TabRowDefaults.Indicator(
-                            modifier = Modifier.tabIndicatorOffset(tabPositions[selectedIndex]),
-                            color = MaterialTheme.colorScheme.primary
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(end = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                TabRow(
+                    selectedTabIndex = selectedIndex,
+                    modifier = Modifier.weight(1f),
+                    containerColor = MaterialTheme.colorScheme.background,
+                    indicator = { tabPositions ->
+                        if (tabPositions.isNotEmpty()) {
+                            TabRowDefaults.Indicator(
+                                modifier = Modifier.tabIndicatorOffset(tabPositions[selectedIndex]),
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
+                ) {
+                    tabs.forEachIndexed { index, tab ->
+                        val isSelected = index == selectedIndex
+                        Tab(
+                            selected = isSelected,
+                            onClick = { selectedTab = tab },
+                            text = {
+                                Text(
+                                    text = tab.title.uppercase(),
+                                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                                    fontSize = 16.sp,
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                    color = if (isSelected) {
+                                        MaterialTheme.colorScheme.onSurface
+                                    } else {
+                                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                                    }
+                                )
+                            },
+                            selectedContentColor = MaterialTheme.colorScheme.onSurface,
+                            unselectedContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                         )
                     }
                 }
-            ) {
-                tabs.forEachIndexed { index, tab ->
-                    val isSelected = index == selectedIndex
-                    Tab(
-                        selected = isSelected,
-                        onClick = { selectedTab = tab },
-                        text = {
-                            Text(
-                                text = tab.title.uppercase(),
-                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
-                                fontSize = 16.sp,
-                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                                color = if (isSelected) {
-                                    MaterialTheme.colorScheme.onSurface
-                                } else {
-                                    MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                                }
-                            )
-                        },
-                        selectedContentColor = MaterialTheme.colorScheme.onSurface,
-                        unselectedContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                IconButton(onClick = { showSettingsDialog = true }) {
+                    Icon(
+                        imageVector = Icons.Filled.Settings,
+                        contentDescription = "Configurar servidor",
+                        tint = MaterialTheme.colorScheme.onSurface
                     )
                 }
             }
@@ -111,6 +149,19 @@ fun TerminalApp() {
                     )
                 }
             }
+        }
+
+        if (showSettingsDialog) {
+            ServerSettingsDialog(
+                initialValue = serverAddress,
+                onDismiss = { showSettingsDialog = false },
+                onSave = { newAddress ->
+                    showSettingsDialog = false
+                    coroutineScope.launch {
+                        userPrefs.saveServerAddress(newAddress)
+                    }
+                }
+            )
         }
     }
 }
@@ -188,6 +239,50 @@ private fun ClockTabContent(
             }
         )
     }
+}
+
+@Composable
+private fun ServerSettingsDialog(
+    initialValue: String,
+    onDismiss: () -> Unit,
+    onSave: (String) -> Unit
+) {
+    var address by rememberSaveable(initialValue) { mutableStateOf(initialValue) }
+    val isValid = address.trim().isNotEmpty()
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(text = "Configuración del servidor") },
+        text = {
+            Column {
+                Text(
+                    text = "Ingresa la dirección del servidor para las peticiones.",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                OutlinedTextField(
+                    value = address,
+                    onValueChange = { address = it },
+                    label = { Text(text = "Dirección del servidor") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = { onSave(address.trim()) },
+                enabled = isValid
+            ) {
+                Text(text = "Guardar")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(text = "Cancelar")
+            }
+        }
+    )
 }
 
 @Composable

@@ -8,8 +8,6 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
 
-private const val DEFAULT_BASE_URL = "http://<IP-SERVER>:8080/"
-
 class AuthInterceptor : Interceptor {
     override fun intercept(chain: Interceptor.Chain): Response {
         val token = getToken()
@@ -24,12 +22,31 @@ class AuthInterceptor : Interceptor {
 fun getToken(): String = "REPLACE_WITH_REAL_TOKEN" // TODO integrar con login.
 
 object ApiClient {
+    const val DEFAULT_BASE_URL = "http://<IP-SERVER>:8080/"
+
     @Volatile
     private var apiService: ApiService? = null
+    @Volatile
+    private var currentBaseUrl: String = DEFAULT_BASE_URL
 
-    fun getApiService(baseUrl: String = DEFAULT_BASE_URL): ApiService {
+    fun getApiService(baseUrl: String = currentBaseUrl): ApiService {
+        if (baseUrl != currentBaseUrl) {
+            synchronized(this) {
+                if (baseUrl != currentBaseUrl) {
+                    currentBaseUrl = baseUrl
+                    apiService = null
+                }
+            }
+        }
         return apiService ?: synchronized(this) {
-            apiService ?: buildRetrofit(baseUrl).also { apiService = it }
+            apiService ?: buildRetrofit(currentBaseUrl).also { apiService = it }
+        }
+    }
+
+    fun updateBaseUrl(baseUrl: String) {
+        synchronized(this) {
+            currentBaseUrl = baseUrl
+            apiService = null
         }
     }
 
