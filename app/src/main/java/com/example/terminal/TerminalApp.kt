@@ -361,7 +361,8 @@ private fun NumericKeypad(
             horizontalArrangement = Arrangement.spacedBy(24.dp),
             userScrollEnabled = false
         ) {
-            items(keypadItems, key = { it.first }) { (label, action) ->
+            items(keypadItems, key = { item -> item.first }) { item ->
+                val (label, action) = item
                 KeypadButton(
                     label = label,
                     onClick = action
