@@ -315,6 +315,11 @@ private fun IssueMaterialsTabContent(
     }
 }
 
+private enum class MaterialInputField {
+    EMPLOYEE,
+    MATERIAL
+}
+
 @Composable
 private fun DisplayValue(label: String, value: String) {
     Text(
