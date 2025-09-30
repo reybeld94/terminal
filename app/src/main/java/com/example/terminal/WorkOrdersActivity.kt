@@ -5,6 +5,7 @@ import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import com.example.terminal.ui.enterImmersiveMode
 
 class WorkOrdersActivity : AppCompatActivity() {
 
@@ -17,6 +18,7 @@ class WorkOrdersActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_work_orders)
+        window.enterImmersiveMode()
 
         val employeeValue = findViewById<TextView>(R.id.textEmployeeValue)
         val workOrderValue = findViewById<TextView>(R.id.textWorkOrderValue)
@@ -103,6 +105,13 @@ class WorkOrdersActivity : AppCompatActivity() {
 
         updateDisplays()
         updateActiveIndicator()
+    }
+
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        if (hasFocus) {
+            window.enterImmersiveMode()
+        }
     }
 
     private fun handleClockAction(clockIn: Boolean) {

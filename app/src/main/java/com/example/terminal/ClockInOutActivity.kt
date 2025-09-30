@@ -6,6 +6,7 @@ import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import com.example.terminal.ui.enterImmersiveMode
 
 class ClockInOutActivity : AppCompatActivity() {
 
@@ -14,6 +15,7 @@ class ClockInOutActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_clock_in_out)
+        window.enterImmersiveMode()
 
         val inputField = findViewById<EditText>(R.id.editEmployeeInput)
         val displayText = findViewById<TextView>(R.id.textEmployeeDisplay)
@@ -65,6 +67,13 @@ class ClockInOutActivity : AppCompatActivity() {
             Toast.makeText(this, getString(messageRes), Toast.LENGTH_SHORT).show()
             inputBuilder.clear()
             updateDisplay(inputField, displayText)
+        }
+    }
+
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        if (hasFocus) {
+            window.enterImmersiveMode()
         }
     }
 

@@ -5,6 +5,7 @@ import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import com.example.terminal.ui.enterImmersiveMode
 
 class IssueMaterialsActivity : AppCompatActivity() {
 
@@ -17,6 +18,7 @@ class IssueMaterialsActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_issue_materials)
+        window.enterImmersiveMode()
 
         val employeeValue = findViewById<TextView>(R.id.textIssueEmployeeValue)
         val materialValue = findViewById<TextView>(R.id.textMaterialValue)
@@ -99,6 +101,13 @@ class IssueMaterialsActivity : AppCompatActivity() {
 
         updateDisplays()
         updateActiveIndicator()
+    }
+
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        if (hasFocus) {
+            window.enterImmersiveMode()
+        }
     }
 
     private fun handleIssueMaterial() {
