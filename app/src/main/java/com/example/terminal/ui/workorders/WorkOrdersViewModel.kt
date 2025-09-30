@@ -5,7 +5,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.terminal.data.local.UserPrefs
-import com.example.terminal.data.network.ApiClient
 import com.example.terminal.data.network.ClockOutStatus
 import com.example.terminal.data.repository.WorkOrdersRepository
 import kotlinx.coroutines.Job
@@ -202,9 +201,8 @@ class WorkOrdersViewModel(
             return object : ViewModelProvider.Factory {
                 @Suppress("UNCHECKED_CAST")
                 override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                    val apiService = ApiClient.getApiService()
-                    val repository = WorkOrdersRepository(apiService)
                     val userPrefs = UserPrefs.create(appContext)
+                    val repository = WorkOrdersRepository(userPrefs)
                     return WorkOrdersViewModel(repository, userPrefs) as T
                 }
             }
