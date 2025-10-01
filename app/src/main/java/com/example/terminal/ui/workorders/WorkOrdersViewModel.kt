@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.terminal.data.local.UserPrefs
 import com.example.terminal.data.network.ClockOutStatus
 import com.example.terminal.data.repository.WorkOrdersRepository
+import com.example.terminal.di.AppContainer
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -202,7 +203,7 @@ class WorkOrdersViewModel(
                 @Suppress("UNCHECKED_CAST")
                 override fun <T : ViewModel> create(modelClass: Class<T>): T {
                     val userPrefs = UserPrefs.create(appContext)
-                    val repository = WorkOrdersRepository(userPrefs)
+                    val repository = AppContainer.workOrdersRepository(appContext, userPrefs)
                     return WorkOrdersViewModel(repository, userPrefs) as T
                 }
             }
