@@ -114,13 +114,15 @@ class WorkOrdersViewModel(
 
         setLoading(true)
         viewModelScope.launch {
-            repository.clockIn(workOrderId, employeeId, DEFAULT_CLOCK_IN_QTY)
-                .onSuccess { response ->
+            val result = repository.clockIn(workOrderId, employeeId, DEFAULT_CLOCK_IN_QTY)
+            result.fold(
+                onSuccess = { response ->
                     showMessage(response.message)
-                }
-                .onFailure { error ->
+                },
+                onFailure = { error ->
                     showMessage(error.message ?: "Error al registrar Clock In")
                 }
+            )
             setLoading(false)
         }
     }
@@ -155,13 +157,15 @@ class WorkOrdersViewModel(
         setLoading(true)
         _uiState.update { it.copy(showClockOutDialog = false) }
         viewModelScope.launch {
-            repository.clockOut(workOrderId, employeeId, quantity, status)
-                .onSuccess { response ->
+            val result = repository.clockOut(workOrderId, employeeId, quantity, status)
+            result.fold(
+                onSuccess = { response ->
                     showMessage(response.message)
-                }
-                .onFailure { error ->
+                },
+                onFailure = { error ->
                     showMessage(error.message ?: "Error al registrar Clock Out")
                 }
+            )
             setLoading(false)
         }
     }
