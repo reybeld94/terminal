@@ -41,7 +41,7 @@ class WorkOrdersRepository(
                 val body = response.body()
                 when {
                     body == null -> Result.failure(IllegalStateException("Respuesta vacía del servidor"))
-                    body.status != "success" -> {
+                    !body.hasSuccessStatus() -> {
                         val message = body.message?.takeIf { it.isNotBlank() }
                             ?: "Operación de Clock In rechazada por el servidor"
                         Result.failure(IllegalStateException(message))
@@ -85,7 +85,7 @@ class WorkOrdersRepository(
                 val body = response.body()
                 when {
                     body == null -> Result.failure(IllegalStateException("Respuesta vacía del servidor"))
-                    body.status != "success" -> {
+                    !body.hasSuccessStatus() -> {
                         val message = body.message?.takeIf { it.isNotBlank() }
                             ?: "Operación de Clock Out rechazada por el servidor"
                         Result.failure(IllegalStateException(message))
@@ -123,6 +123,8 @@ class WorkOrdersRepository(
             formatter.format(Date())
         }
     }
+
+    private fun ApiResponse.hasSuccessStatus(): Boolean = status.equals("success", ignoreCase = true)
 
     private companion object {
         const val DIVISION_FK = 1
