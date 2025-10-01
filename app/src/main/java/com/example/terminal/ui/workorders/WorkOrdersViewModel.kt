@@ -115,10 +115,14 @@ class WorkOrdersViewModel(
         viewModelScope.launch {
             repository.clockIn(workOrderId, employeeId, DEFAULT_CLOCK_IN_QTY)
                 .onSuccess { response ->
-                    showMessage(response.message)
+                    val message = response.message.takeIf { it.isNotBlank() }
+                        ?: "Clock In registrado correctamente"
+                    showMessage(message)
                 }
                 .onFailure { error ->
-                    showMessage(error.message ?: "Error al registrar Clock In")
+                    val message = error.message?.takeIf { it.isNotBlank() }
+                        ?: "Error al registrar Clock In"
+                    showMessage(message)
                 }
             setLoading(false)
         }
@@ -156,10 +160,14 @@ class WorkOrdersViewModel(
         viewModelScope.launch {
             repository.clockOut(workOrderId, employeeId, quantity, status)
                 .onSuccess { response ->
-                    showMessage(response.message)
+                    val message = response.message.takeIf { it.isNotBlank() }
+                        ?: "Clock Out registrado correctamente"
+                    showMessage(message)
                 }
                 .onFailure { error ->
-                    showMessage(error.message ?: "Error al registrar Clock Out")
+                    val message = error.message?.takeIf { it.isNotBlank() }
+                        ?: "Error al registrar Clock Out"
+                    showMessage(message)
                 }
             setLoading(false)
         }
