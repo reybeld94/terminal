@@ -1,7 +1,5 @@
 package com.example.terminal.data.repository
 
-import com.example.terminal.data.auth.TokenProvider
-import com.example.terminal.data.auth.TokenRefreshHandler
 import com.example.terminal.data.local.UserPrefs
 import com.example.terminal.data.network.ApiClient
 import com.example.terminal.data.network.ApiResponse
@@ -15,14 +13,8 @@ import kotlinx.coroutines.withContext
 
 class WorkOrdersRepository(
     private val userPrefs: UserPrefs,
-    private val tokenProvider: TokenProvider,
-    private val refreshHandler: TokenRefreshHandler = TokenRefreshHandler { null },
     private val gson: Gson = Gson()
 ) {
-
-    init {
-        ApiClient.configure(tokenProvider, refreshHandler)
-    }
     suspend fun clockIn(
         workOrderCollectionId: Int,
         userId: Int,
