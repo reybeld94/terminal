@@ -52,8 +52,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.terminal.data.auth.AuthToken
 import com.example.terminal.data.local.UserPrefs
 import com.example.terminal.data.network.ApiClient
+import com.example.terminal.di.AppContainer
 import com.example.terminal.ui.theme.TerminalTheme
 import com.example.terminal.ui.workorders.WorkOrdersScreen
 import java.util.ArrayList
@@ -69,7 +71,9 @@ fun TerminalApp() {
         mutableStateMapOf<Int, MutableList<String>>()
     }
     val userPrefs = remember { UserPrefs.create(context) }
+    val tokenProvider = remember { AppContainer.tokenProvider(context) }
     val serverAddress by userPrefs.serverAddress.collectAsState(initial = ApiClient.DEFAULT_BASE_URL)
+    val savedToken by tokenProvider.tokenFlow.collectAsState()
     var showSettingsDialog by rememberSaveable { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
 
@@ -153,12 +157,19 @@ fun TerminalApp() {
 
         if (showSettingsDialog) {
             ServerSettingsDialog(
-                initialValue = serverAddress,
+                initialAddress = serverAddress,
+                initialToken = savedToken?.value.orEmpty(),
                 onDismiss = { showSettingsDialog = false },
-                onSave = { newAddress ->
+                onSave = { newAddress, newToken ->
                     showSettingsDialog = false
                     coroutineScope.launch {
                         userPrefs.saveServerAddress(newAddress)
+                        val trimmedToken = newToken.trim()
+                        if (trimmedToken.isEmpty()) {
+                            tokenProvider.invalidateToken()
+                        } else {
+                            tokenProvider.persistToken(AuthToken(trimmedToken, expiresAtEpochSeconds = null))
+                        }
                     }
                 }
             )
@@ -243,11 +254,13 @@ private fun ClockTabContent(
 
 @Composable
 private fun ServerSettingsDialog(
-    initialValue: String,
+    initialAddress: String,
+    initialToken: String,
     onDismiss: () -> Unit,
-    onSave: (String) -> Unit
+    onSave: (String, String) -> Unit
 ) {
-    var address by rememberSaveable(initialValue) { mutableStateOf(initialValue) }
+    var address by rememberSaveable(initialAddress) { mutableStateOf(initialAddress) }
+    var token by rememberSaveable(initialToken) { mutableStateOf(initialToken) }
     val isValid = address.trim().isNotEmpty()
 
     AlertDialog(
@@ -255,23 +268,31 @@ private fun ServerSettingsDialog(
         title = { Text(text = "Configuración del servidor") },
         text = {
             Column {
-                Text(
-                    text = "Ingresa la dirección del servidor para las peticiones.",
-                    style = MaterialTheme.typography.bodyMedium
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-                OutlinedTextField(
-                    value = address,
-                    onValueChange = { address = it },
-                    label = { Text(text = "Dirección del servidor") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
+                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    Text(
+                        text = "Configura la dirección y el token utilizado para autenticar las peticiones.",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    OutlinedTextField(
+                        value = address,
+                        onValueChange = { address = it },
+                        label = { Text(text = "Dirección del servidor") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    OutlinedTextField(
+                        value = token,
+                        onValueChange = { token = it },
+                        label = { Text(text = "Token de acceso") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
             }
         },
         confirmButton = {
             TextButton(
-                onClick = { onSave(address.trim()) },
+                onClick = { onSave(address.trim(), token) },
                 enabled = isValid
             ) {
                 Text(text = "Guardar")
