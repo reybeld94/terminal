@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.terminal.data.local.UserPrefs
 import com.example.terminal.data.network.ClockOutStatus
+import com.example.terminal.data.repository.UserStatus
 import com.example.terminal.data.repository.WorkOrdersRepository
 import com.example.terminal.di.AppContainer
 import kotlinx.coroutines.Job
@@ -27,7 +28,10 @@ data class WorkOrdersUiState(
     val activeField: WorkOrderInputField = WorkOrderInputField.EMPLOYEE,
     val isLoading: Boolean = false,
     val snackbarMessage: String? = null,
-    val showClockOutDialog: Boolean = false
+    val showClockOutDialog: Boolean = false,
+    val isEmployeeValidated: Boolean = false,
+    val employeeValidationError: String? = null,
+    val userStatus: UserStatus? = null
 )
 
 class WorkOrdersViewModel(
@@ -61,7 +65,9 @@ class WorkOrdersViewModel(
     }
 
     fun onWorkOrderFieldSelected() {
-        _uiState.update { it.copy(activeField = WorkOrderInputField.WORK_ORDER) }
+        if (_uiState.value.isEmployeeValidated) {
+            _uiState.update { it.copy(activeField = WorkOrderInputField.WORK_ORDER) }
+        }
     }
 
     fun setDigit(digit: String) {
@@ -87,16 +93,29 @@ class WorkOrdersViewModel(
     }
 
     fun enter() {
-        val nextField = when (_uiState.value.activeField) {
-            WorkOrderInputField.EMPLOYEE -> WorkOrderInputField.WORK_ORDER
-            WorkOrderInputField.WORK_ORDER -> WorkOrderInputField.EMPLOYEE
+        when (_uiState.value.activeField) {
+            WorkOrderInputField.EMPLOYEE -> {
+                if (_uiState.value.isEmployeeValidated) {
+                    _uiState.update { it.copy(activeField = WorkOrderInputField.WORK_ORDER) }
+                } else {
+                    validateEmployee()
+                }
+            }
+
+            WorkOrderInputField.WORK_ORDER -> {
+                _uiState.update { it.copy(activeField = WorkOrderInputField.EMPLOYEE) }
+            }
         }
-        _uiState.update { it.copy(activeField = nextField) }
     }
 
     fun onClockIn() {
         val employee = _uiState.value.employeeId.trim()
         val workOrder = _uiState.value.workOrderId.trim()
+
+        if (!_uiState.value.isEmployeeValidated) {
+            showMessage("Valide el empleado antes de continuar")
+            return
+        }
 
         if (employee.isEmpty() || workOrder.isEmpty()) {
             showMessage("Employee # y Work Order # son requeridos")
@@ -130,6 +149,11 @@ class WorkOrdersViewModel(
     fun onClockOutClick() {
         val employee = _uiState.value.employeeId.trim()
         val workOrder = _uiState.value.workOrderId.trim()
+
+        if (!_uiState.value.isEmployeeValidated) {
+            showMessage("Valide el empleado antes de continuar")
+            return
+        }
         if (employee.isEmpty() || workOrder.isEmpty()) {
             showMessage("Employee # y Work Order # son requeridos")
             return
@@ -185,7 +209,14 @@ class WorkOrdersViewModel(
     }
 
     private fun updateEmployeeId(value: String) {
-        _uiState.update { it.copy(employeeId = value) }
+        _uiState.update {
+            it.copy(
+                employeeId = value,
+                isEmployeeValidated = false,
+                employeeValidationError = null,
+                userStatus = null
+            )
+        }
         saveEmployeeJob?.cancel()
         if (value.isNotBlank()) {
             saveEmployeeJob = viewModelScope.launch {
@@ -196,6 +227,47 @@ class WorkOrdersViewModel(
 
     private fun updateWorkOrderId(value: String) {
         _uiState.update { it.copy(workOrderId = value) }
+    }
+
+    private fun validateEmployee() {
+        val employee = _uiState.value.employeeId.trim()
+        if (employee.isEmpty()) {
+            showMessage("Ingrese el número de empleado")
+            return
+        }
+
+        val employeeId = employee.toIntOrNull()
+        if (employeeId == null) {
+            showMessage("Ingrese un número de empleado válido")
+            return
+        }
+
+        setLoading(true)
+        viewModelScope.launch {
+            val result = repository.fetchUserStatus(employeeId)
+            result.fold(
+                onSuccess = { status ->
+                    _uiState.update {
+                        it.copy(
+                            isEmployeeValidated = true,
+                            employeeValidationError = null,
+                            userStatus = status,
+                            activeField = WorkOrderInputField.WORK_ORDER
+                        )
+                    }
+                },
+                onFailure = { error ->
+                    _uiState.update {
+                        it.copy(
+                            isEmployeeValidated = false,
+                            employeeValidationError = error.message ?: "Wrong user",
+                            userStatus = null
+                        )
+                    }
+                }
+            )
+            setLoading(false)
+        }
     }
 
     private fun showMessage(message: String) {
