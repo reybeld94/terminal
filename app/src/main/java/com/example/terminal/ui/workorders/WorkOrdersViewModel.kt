@@ -115,7 +115,9 @@ class WorkOrdersViewModel(
             val result = repository.clockIn(workOrderId, employeeId)
             result.fold(
                 onSuccess = { response ->
-                    showMessage(response.message)
+                    val successMessage = response.message?.takeIf { it.isNotBlank() }
+                        ?: "Clock In registrado correctamente"
+                    showMessage(successMessage)
                 },
                 onFailure = { error ->
                     showMessage(error.message ?: "Error al registrar Clock In")
@@ -162,7 +164,9 @@ class WorkOrdersViewModel(
             )
             result.fold(
                 onSuccess = { response ->
-                    showMessage(response.message)
+                    val successMessage = response.message?.takeIf { it.isNotBlank() }
+                        ?: "Clock Out registrado correctamente"
+                    showMessage(successMessage)
                 },
                 onFailure = { error ->
                     showMessage(error.message ?: "Error al registrar Clock Out")

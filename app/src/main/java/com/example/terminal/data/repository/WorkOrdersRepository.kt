@@ -42,7 +42,7 @@ class WorkOrdersRepository(
                 when {
                     body == null -> Result.failure(IllegalStateException("Respuesta vacía del servidor"))
                     body.status != "success" -> {
-                        val message = body.message.takeIf { it.isNotBlank() }
+                        val message = body.message?.takeIf { it.isNotBlank() }
                             ?: "Operación de Clock In rechazada por el servidor"
                         Result.failure(IllegalStateException(message))
                     }
@@ -86,7 +86,7 @@ class WorkOrdersRepository(
                 when {
                     body == null -> Result.failure(IllegalStateException("Respuesta vacía del servidor"))
                     body.status != "success" -> {
-                        val message = body.message.takeIf { it.isNotBlank() }
+                        val message = body.message?.takeIf { it.isNotBlank() }
                             ?: "Operación de Clock Out rechazada por el servidor"
                         Result.failure(IllegalStateException(message))
                     }

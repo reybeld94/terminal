@@ -22,7 +22,7 @@ data class ClockOutRequest(
 
 data class ApiResponse(
     @SerializedName("status") val status: String,
-    @SerializedName("message") val message: String
+    @SerializedName("message") val message: String?
 )
 
 enum class ClockOutStatus(val isComplete: Boolean, val displayName: String) {
