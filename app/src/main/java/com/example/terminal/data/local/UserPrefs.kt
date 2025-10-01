@@ -25,7 +25,8 @@ class UserPrefs private constructor(private val appContext: Context) {
 
     val serverAddress: Flow<String>
         get() = appContext.dataStore.data.map { preferences ->
-            preferences[SERVER_ADDRESS_KEY] ?: ApiClient.DEFAULT_BASE_URL
+            val savedAddress = preferences[SERVER_ADDRESS_KEY] ?: ApiClient.DEFAULT_BASE_URL
+            ApiClient.normalizeBaseUrl(savedAddress)
         }
 
     suspend fun saveLastEmployeeId(employeeId: String) {
@@ -35,8 +36,9 @@ class UserPrefs private constructor(private val appContext: Context) {
     }
 
     suspend fun saveServerAddress(address: String) {
+        val normalizedAddress = ApiClient.normalizeBaseUrl(address)
         appContext.dataStore.edit { preferences ->
-            preferences[SERVER_ADDRESS_KEY] = address
+            preferences[SERVER_ADDRESS_KEY] = normalizedAddress
         }
     }
 
