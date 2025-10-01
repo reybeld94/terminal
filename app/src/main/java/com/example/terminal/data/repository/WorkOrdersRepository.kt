@@ -40,7 +40,14 @@ class WorkOrdersRepository(
             )
 
             if (response.isSuccessful) {
-                response.body() ?: throw IllegalStateException("Respuesta vacía del servidor")
+                val body = response.body() ?: throw IllegalStateException("Respuesta vacía del servidor")
+                if (body.status == "success") {
+                    body
+                } else {
+                    val message = body.message.takeIf { it.isNotBlank() }
+                        ?: "La operación de Clock In no se completó correctamente"
+                    throw IllegalStateException(message)
+                }
             } else {
                 val errorMessage = parseError(response.errorBody()?.string())
                 throw IllegalStateException(errorMessage)
@@ -67,7 +74,14 @@ class WorkOrdersRepository(
             )
 
             if (response.isSuccessful) {
-                response.body() ?: throw IllegalStateException("Respuesta vacía del servidor")
+                val body = response.body() ?: throw IllegalStateException("Respuesta vacía del servidor")
+                if (body.status == "success") {
+                    body
+                } else {
+                    val message = body.message.takeIf { it.isNotBlank() }
+                        ?: "La operación de Clock Out no se completó correctamente"
+                    throw IllegalStateException(message)
+                }
             } else {
                 val errorMessage = parseError(response.errorBody()?.string())
                 throw IllegalStateException(errorMessage)
