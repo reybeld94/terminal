@@ -62,6 +62,20 @@ private class TokenRefreshAuthenticator(
 object ApiClient {
     const val DEFAULT_BASE_URL = "http://<IP-SERVER>:8080/"
 
+    fun normalizeBaseUrl(baseUrl: String): String {
+        var normalized = baseUrl.trim()
+        if (normalized.isEmpty()) {
+            return DEFAULT_BASE_URL
+        }
+        if (!normalized.startsWith("http://") && !normalized.startsWith("https://")) {
+            normalized = "http://$normalized"
+        }
+        if (!normalized.endsWith('/')) {
+            normalized += "/"
+        }
+        return normalized
+    }
+
     @Volatile
     private var apiService: ApiService? = null
     @Volatile
@@ -83,10 +97,11 @@ object ApiClient {
     fun getApiService(baseUrl: String = currentBaseUrl): ApiService {
         val provider = tokenProvider
             ?: throw IllegalStateException("TokenProvider must be configured before creating ApiService")
-        if (baseUrl != currentBaseUrl) {
+        val normalizedBaseUrl = normalizeBaseUrl(baseUrl)
+        if (normalizedBaseUrl != currentBaseUrl) {
             synchronized(this) {
-                if (baseUrl != currentBaseUrl) {
-                    currentBaseUrl = baseUrl
+                if (normalizedBaseUrl != currentBaseUrl) {
+                    currentBaseUrl = normalizedBaseUrl
                     apiService = null
                 }
             }
@@ -97,8 +112,9 @@ object ApiClient {
     }
 
     fun updateBaseUrl(baseUrl: String) {
+        val normalizedBaseUrl = normalizeBaseUrl(baseUrl)
         synchronized(this) {
-            currentBaseUrl = baseUrl
+            currentBaseUrl = normalizedBaseUrl
             apiService = null
         }
     }
