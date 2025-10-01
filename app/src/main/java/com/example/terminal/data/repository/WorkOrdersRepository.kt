@@ -1,33 +1,39 @@
 package com.example.terminal.data.repository
 
+import android.os.Build
 import com.example.terminal.data.local.UserPrefs
 import com.example.terminal.data.network.ApiClient
 import com.example.terminal.data.network.ApiResponse
 import com.example.terminal.data.network.ClockInRequest
 import com.example.terminal.data.network.ClockOutRequest
-import com.example.terminal.data.network.ClockOutStatus
 import com.google.gson.Gson
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
+import java.text.SimpleDateFormat
+import java.time.OffsetDateTime
+import java.time.format.DateTimeFormatter
+import java.util.Date
+import java.util.Locale
+import java.util.TimeZone
 
 class WorkOrdersRepository(
     private val userPrefs: UserPrefs,
     private val gson: Gson = Gson()
 ) {
     suspend fun clockIn(
-        workOrderCollectionId: Int,
-        userId: Int,
-        qty: Int
+        workOrderAssemblyId: Int,
+        userId: Int
     ): Result<ApiResponse> = withContext(Dispatchers.IO) {
         val baseUrl = userPrefs.serverAddress.first()
         try {
             val apiService = ApiClient.getApiService(baseUrl)
             val response = apiService.clockIn(
                 ClockInRequest(
-                    workOrderCollectionId = workOrderCollectionId,
+                    workOrderAssemblyId = workOrderAssemblyId,
                     userId = userId,
-                    qty = qty
+                    divisionFK = DIVISION_FK,
+                    deviceDate = currentIsoDateTime()
                 )
             )
 
@@ -53,9 +59,11 @@ class WorkOrdersRepository(
 
     suspend fun clockOut(
         workOrderCollectionId: Int,
-        userId: Int,
-        qty: Int,
-        status: ClockOutStatus
+        quantity: Int,
+        complete: Boolean,
+        quantityScrapped: Int = 0,
+        scrapReasonPK: Int = 0,
+        comment: String = ""
     ): Result<ApiResponse> = withContext(Dispatchers.IO) {
         val baseUrl = userPrefs.serverAddress.first()
         try {
@@ -63,9 +71,13 @@ class WorkOrdersRepository(
             val response = apiService.clockOut(
                 ClockOutRequest(
                     workOrderCollectionId = workOrderCollectionId,
-                    userId = userId,
-                    qty = qty,
-                    status = status.apiValue
+                    quantity = quantity,
+                    quantityScrapped = quantityScrapped,
+                    scrapReasonPK = scrapReasonPK,
+                    complete = complete,
+                    comment = comment,
+                    deviceTime = currentIsoDateTime(),
+                    divisionFK = DIVISION_FK
                 )
             )
 
@@ -100,5 +112,19 @@ class WorkOrdersRepository(
         } catch (ex: Exception) {
             errorBody
         }
+    }
+
+    private fun currentIsoDateTime(): String {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            OffsetDateTime.now().format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
+        } else {
+            val formatter = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX", Locale.US)
+            formatter.timeZone = TimeZone.getDefault()
+            formatter.format(Date())
+        }
+    }
+
+    private companion object {
+        const val DIVISION_FK = 1
     }
 }
