@@ -25,6 +25,19 @@ data class ApiResponse(
     @SerializedName("message") val message: String?
 )
 
+data class UserStatusResponse(
+    @SerializedName("userId") val userId: Int,
+    @SerializedName("firstName") val firstName: String,
+    @SerializedName("lastName") val lastName: String,
+    @SerializedName("workOrderCollectionId") val workOrderCollectionId: Int?,
+    @SerializedName("workOrderNumber") val workOrderNumber: String?,
+    @SerializedName("workOrderAssemblyNumber") val workOrderAssemblyNumber: String?,
+    @SerializedName("clockInTime") val clockInTime: String?,
+    @SerializedName("partNumber") val partNumber: String?,
+    @SerializedName("operationCode") val operationCode: String?,
+    @SerializedName("operationName") val operationName: String?
+)
+
 enum class ClockOutStatus(val isComplete: Boolean, val displayName: String) {
     COMPLETE(true, "Complete"),
     INCOMPLETE(false, "Incomplete");

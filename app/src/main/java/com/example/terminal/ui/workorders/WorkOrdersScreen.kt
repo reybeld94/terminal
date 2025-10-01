@@ -39,7 +39,6 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -60,6 +59,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.terminal.data.network.ClockOutStatus
+import com.example.terminal.data.repository.UserStatus
 
 @Composable
 fun WorkOrdersScreen(
@@ -135,8 +135,21 @@ private fun WorkOrdersForm(
     onClockIn: () -> Unit,
     onClockOut: () -> Unit
 ) {
-    val isClockInEnabled = uiState.employeeId.isNotBlank() && uiState.workOrderId.isNotBlank() && !uiState.isLoading
+    val isClockInEnabled = uiState.isEmployeeValidated &&
+        uiState.employeeId.isNotBlank() &&
+        uiState.workOrderId.isNotBlank() &&
+        !uiState.isLoading
     val isClockOutEnabled = isClockInEnabled && !uiState.isLoading
+    val employeeInstruction = if (uiState.isEmployeeValidated) {
+        "Employee validated. Continue with the Work Order step."
+    } else {
+        "Enter your Employee ID and press Enter on the keypad to validate."
+    }
+    val workOrderInstruction = if (uiState.isEmployeeValidated) {
+        "Enter or scan the Work Order number and use the keypad."
+    } else {
+        "Validate the employee to unlock this step."
+    }
 
     Column(
         modifier = modifier.fillMaxHeight(),
@@ -149,26 +162,56 @@ private fun WorkOrdersForm(
             color = MaterialTheme.colorScheme.onSurface
         )
         Spacer(modifier = Modifier.height(24.dp))
+        Text(
+            text = "Step 1 · Employee",
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+        Spacer(modifier = Modifier.height(8.dp))
         SelectableField(
             label = "Employee #",
             value = uiState.employeeId,
             isActive = uiState.activeField == WorkOrderInputField.EMPLOYEE,
-            onClick = onEmployeeClick
+            onClick = onEmployeeClick,
+            enabled = !uiState.isLoading,
+            isError = uiState.employeeValidationError != null
         )
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = employeeInstruction,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+        if (uiState.employeeValidationError != null) {
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = uiState.employeeValidationError,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.error
+            )
+        }
+        if (uiState.userStatus != null) {
+            Spacer(modifier = Modifier.height(16.dp))
+            EmployeeStatusCard(status = uiState.userStatus)
+        }
         Spacer(modifier = Modifier.height(16.dp))
+        Text(
+            text = "Step 2 · Work Order",
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+        Spacer(modifier = Modifier.height(8.dp))
         SelectableField(
             label = "Work Order #",
             value = uiState.workOrderId,
             isActive = uiState.activeField == WorkOrderInputField.WORK_ORDER,
-            onClick = onWorkOrderClick
+            onClick = onWorkOrderClick,
+            enabled = uiState.isEmployeeValidated && !uiState.isLoading
         )
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(8.dp))
         Text(
-            text = when (uiState.activeField) {
-                WorkOrderInputField.EMPLOYEE -> "Ingrese o escanee el número de empleado y use el keypad."
-                WorkOrderInputField.WORK_ORDER -> "Ingrese o escanee el número de Work Order y use el keypad."
-            },
-            style = MaterialTheme.typography.bodyLarge,
+            text = workOrderInstruction,
+            style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurface
         )
         Spacer(modifier = Modifier.height(32.dp))
@@ -217,7 +260,9 @@ private fun SelectableField(
     label: String,
     value: String,
     isActive: Boolean,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    enabled: Boolean = true,
+    isError: Boolean = false
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val displayValue = if (value.isBlank()) "" else value
@@ -227,25 +272,123 @@ private fun SelectableField(
         onValueChange = {},
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(
-                interactionSource = interactionSource,
-                indication = null,
-                onClick = onClick
-            ),
+            .let {
+                if (enabled) {
+                    it.clickable(
+                        interactionSource = interactionSource,
+                        indication = null,
+                        onClick = onClick
+                    )
+                } else {
+                    it
+                }
+            },
         readOnly = true,
+        enabled = enabled,
+        isError = isError,
         label = { Text(text = label) },
         placeholder = { Text(text = "--") },
         singleLine = true,
         colors = OutlinedTextFieldDefaults.colors(
             focusedBorderColor = MaterialTheme.colorScheme.primary,
             unfocusedBorderColor = if (isActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline,
+            disabledBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
             cursorColor = Color.Transparent,
             focusedTextColor = MaterialTheme.colorScheme.onSurface,
             unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
             focusedLabelColor = MaterialTheme.colorScheme.primary,
-            unfocusedLabelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+            unfocusedLabelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+            disabledLabelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+            disabledTextColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+            errorBorderColor = MaterialTheme.colorScheme.error,
+            errorLabelColor = MaterialTheme.colorScheme.error
         )
     )
+}
+
+@Composable
+private fun EmployeeStatusCard(
+    status: UserStatus,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        )
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(
+                    text = "Employee",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    text = "${status.firstName} ${status.lastName}",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Text(
+                    text = "ID: ${status.userId}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            val workOrder = status.activeWorkOrder
+            if (workOrder != null) {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        text = "Active Work Order",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    WorkOrderDetailRow("Collection ID", workOrder.workOrderCollectionId?.toString())
+                    WorkOrderDetailRow("Work Order #", workOrder.workOrderNumber)
+                    WorkOrderDetailRow("Assembly #", workOrder.workOrderAssemblyNumber)
+                    WorkOrderDetailRow("Clock In", workOrder.clockInTime)
+                    WorkOrderDetailRow("Part #", workOrder.partNumber)
+                    WorkOrderDetailRow("Operation Code", workOrder.operationCode)
+                    WorkOrderDetailRow("Operation Name", workOrder.operationName)
+                }
+            } else {
+                Text(
+                    text = "No active work order",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun WorkOrderDetailRow(label: String, value: String?) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Text(
+            text = value?.takeIf { it.isNotBlank() } ?: "--",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurface,
+            textAlign = TextAlign.End
+        )
+    }
 }
 
 @Composable
