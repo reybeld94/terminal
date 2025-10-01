@@ -29,7 +29,7 @@ class WorkOrdersRepository(
         qty: Int
     ): Result<ApiResponse> = withContext(Dispatchers.IO) {
         val baseUrl = userPrefs.serverAddress.first()
-        runCatching {
+        try {
             val apiService = ApiClient.getApiService(baseUrl)
             val response = apiService.clockIn(
                 ClockInRequest(
@@ -40,11 +40,22 @@ class WorkOrdersRepository(
             )
 
             if (response.isSuccessful) {
-                response.body() ?: throw IllegalStateException("Respuesta vacía del servidor")
+                val body = response.body()
+                when {
+                    body == null -> Result.failure(IllegalStateException("Respuesta vacía del servidor"))
+                    body.status != "success" -> {
+                        val message = body.message.takeIf { it.isNotBlank() }
+                            ?: "Operación de Clock In rechazada por el servidor"
+                        Result.failure(IllegalStateException(message))
+                    }
+                    else -> Result.success(body)
+                }
             } else {
                 val errorMessage = parseError(response.errorBody()?.string())
-                throw IllegalStateException(errorMessage)
+                Result.failure(IllegalStateException(errorMessage))
             }
+        } catch (ex: Exception) {
+            Result.failure(ex)
         }
     }
 
@@ -55,7 +66,7 @@ class WorkOrdersRepository(
         status: ClockOutStatus
     ): Result<ApiResponse> = withContext(Dispatchers.IO) {
         val baseUrl = userPrefs.serverAddress.first()
-        runCatching {
+        try {
             val apiService = ApiClient.getApiService(baseUrl)
             val response = apiService.clockOut(
                 ClockOutRequest(
@@ -67,11 +78,22 @@ class WorkOrdersRepository(
             )
 
             if (response.isSuccessful) {
-                response.body() ?: throw IllegalStateException("Respuesta vacía del servidor")
+                val body = response.body()
+                when {
+                    body == null -> Result.failure(IllegalStateException("Respuesta vacía del servidor"))
+                    body.status != "success" -> {
+                        val message = body.message.takeIf { it.isNotBlank() }
+                            ?: "Operación de Clock Out rechazada por el servidor"
+                        Result.failure(IllegalStateException(message))
+                    }
+                    else -> Result.success(body)
+                }
             } else {
                 val errorMessage = parseError(response.errorBody()?.string())
-                throw IllegalStateException(errorMessage)
+                Result.failure(IllegalStateException(errorMessage))
             }
+        } catch (ex: Exception) {
+            Result.failure(ex)
         }
     }
 
