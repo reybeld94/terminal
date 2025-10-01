@@ -16,8 +16,6 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-private const val DEFAULT_CLOCK_IN_QTY = 1
-
 enum class WorkOrderInputField {
     EMPLOYEE,
     WORK_ORDER
@@ -114,7 +112,7 @@ class WorkOrdersViewModel(
 
         setLoading(true)
         viewModelScope.launch {
-            val result = repository.clockIn(workOrderId, employeeId, DEFAULT_CLOCK_IN_QTY)
+            val result = repository.clockIn(workOrderId, employeeId)
             result.fold(
                 onSuccess = { response ->
                     showMessage(response.message)
@@ -157,7 +155,11 @@ class WorkOrdersViewModel(
         setLoading(true)
         _uiState.update { it.copy(showClockOutDialog = false) }
         viewModelScope.launch {
-            val result = repository.clockOut(workOrderId, employeeId, quantity, status)
+            val result = repository.clockOut(
+                workOrderCollectionId = workOrderId,
+                quantity = quantity,
+                complete = status.isComplete
+            )
             result.fold(
                 onSuccess = { response ->
                     showMessage(response.message)

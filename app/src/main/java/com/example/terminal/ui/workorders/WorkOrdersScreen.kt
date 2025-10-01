@@ -404,7 +404,7 @@ private fun StatusDropdown(
                 .fillMaxWidth()
                 .menuAnchor(),
             readOnly = true,
-            value = selectedStatus.apiValue,
+            value = selectedStatus.displayName,
             onValueChange = {},
             label = { Text(text = "Status") },
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) }
@@ -415,7 +415,7 @@ private fun StatusDropdown(
         ) {
             ClockOutStatus.entries.forEach { status ->
                 DropdownMenuItem(
-                    text = { Text(text = status.apiValue) },
+                    text = { Text(text = status.displayName) },
                     onClick = { onStatusSelected(status) }
                 )
             }
