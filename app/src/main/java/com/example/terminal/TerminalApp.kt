@@ -18,6 +18,8 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -48,6 +50,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -261,6 +265,7 @@ private fun ServerSettingsDialog(
 ) {
     var address by rememberSaveable(initialAddress) { mutableStateOf(initialAddress) }
     var token by rememberSaveable(initialToken) { mutableStateOf(initialToken) }
+    var tokenVisible by rememberSaveable { mutableStateOf(false) }
     val isValid = address.trim().isNotEmpty()
 
     AlertDialog(
@@ -285,7 +290,29 @@ private fun ServerSettingsDialog(
                         onValueChange = { token = it },
                         label = { Text(text = "Token de acceso") },
                         singleLine = true,
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
+                        visualTransformation = if (tokenVisible) {
+                            VisualTransformation.None
+                        } else {
+                            PasswordVisualTransformation()
+                        },
+                        trailingIcon = {
+                            val visibilityIcon = if (tokenVisible) {
+                                Icons.Filled.VisibilityOff
+                            } else {
+                                Icons.Filled.Visibility
+                            }
+                            IconButton(onClick = { tokenVisible = !tokenVisible }) {
+                                Icon(
+                                    imageVector = visibilityIcon,
+                                    contentDescription = if (tokenVisible) {
+                                        "Ocultar token"
+                                    } else {
+                                        "Mostrar token"
+                                    }
+                                )
+                            }
+                        }
                     )
                 }
             }
