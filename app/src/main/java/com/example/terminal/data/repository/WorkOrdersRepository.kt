@@ -23,7 +23,7 @@ class WorkOrdersRepository(
     private val userPrefs: UserPrefs,
     private val gson: Gson = Gson()
 ) {
-    suspend fun fetchUserStatus(userId: Int): Result<UserStatus> = withContext(Dispatchers.IO) {
+    suspend fun fetchUserStatus(userId: String): Result<UserStatus> = withContext(Dispatchers.IO) {
         val baseUrl = userPrefs.serverAddress.first()
         try {
             val apiService = ApiClient.getApiService(baseUrl)
@@ -45,7 +45,7 @@ class WorkOrdersRepository(
 
     suspend fun clockIn(
         workOrderAssemblyId: Int,
-        userId: Int
+        userId: String
     ): Result<ApiResponse> = withContext(Dispatchers.IO) {
         val baseUrl = userPrefs.serverAddress.first()
         try {

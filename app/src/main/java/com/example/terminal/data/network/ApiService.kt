@@ -14,5 +14,5 @@ interface ApiService {
     suspend fun clockOut(@Body request: ClockOutRequest): Response<ApiResponse>
 
     @GET("users/{userId}")
-    suspend fun getUserStatus(@Path("userId") userId: Int): Response<UserStatusResponse>
+    suspend fun getUserStatus(@Path("userId") userId: String): Response<UserStatusResponse>
 }
