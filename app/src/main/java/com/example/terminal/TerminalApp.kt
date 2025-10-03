@@ -1,6 +1,7 @@
 package com.example.terminal
 
-import android.media.MediaPlayer
+import android.media.AudioAttributes
+import android.media.SoundPool
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -441,20 +442,40 @@ private fun NumericKeypad(
         contentAlignment = Alignment.Center
     ) {
         val context = LocalContext.current
-        val mediaPlayer = remember { MediaPlayer.create(context, R.raw.beep) }
+        val soundPool = remember {
+            SoundPool.Builder()
+                .setAudioAttributes(
+                    AudioAttributes.Builder()
+                        .setUsage(AudioAttributes.USAGE_ASSISTANCE_SONIFICATION)
+                        .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                        .build()
+                )
+                .setMaxStreams(1)
+                .build()
+        }
+        var beepSoundId by remember { mutableStateOf(0) }
 
-        DisposableEffect(Unit) {
+        DisposableEffect(soundPool, context) {
+            val loadId = soundPool.load(context, R.raw.beep, 1)
+            val listener = SoundPool.OnLoadCompleteListener { _, sampleId, status ->
+                if (status == 0 && sampleId == loadId) {
+                    beepSoundId = sampleId
+                }
+            }
+            soundPool.setOnLoadCompleteListener(listener)
+
             onDispose {
-                mediaPlayer?.release()
+                soundPool.setOnLoadCompleteListener(null)
+                if (loadId != 0) {
+                    soundPool.unload(loadId)
+                }
+                soundPool.release()
             }
         }
 
         fun playBeep() {
-            mediaPlayer?.let { player ->
-                if (player.isPlaying) {
-                    player.seekTo(0)
-                }
-                player.start()
+            if (beepSoundId != 0) {
+                soundPool.play(beepSoundId, 1f, 1f, 1, 0, 1f)
             }
         }
 
