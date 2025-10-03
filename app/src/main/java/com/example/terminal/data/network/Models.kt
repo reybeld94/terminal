@@ -4,7 +4,7 @@ import com.google.gson.annotations.SerializedName
 
 data class ClockInRequest(
     @SerializedName("workOrderAssemblyId") val workOrderAssemblyId: Int,
-    @SerializedName("userId") val userId: Int,
+    @SerializedName("userId") val userId: String,
     @SerializedName("divisionFK") val divisionFK: Int,
     @SerializedName("deviceDate") val deviceDate: String
 )

@@ -122,16 +122,16 @@ class WorkOrdersViewModel(
             return
         }
 
-        val employeeId = employee.toIntOrNull()
-        val workOrderId = workOrder.toIntOrNull()
-        if (employeeId == null || workOrderId == null) {
+        if (!employee.isDigitsOnly() || !workOrder.isDigitsOnly()) {
             showMessage("Ingrese valores numéricos válidos")
             return
         }
 
+        val workOrderId = workOrder.toInt()
+
         setLoading(true)
         viewModelScope.launch {
-            val result = repository.clockIn(workOrderId, employeeId)
+            val result = repository.clockIn(workOrderId, employee)
             result.fold(
                 onSuccess = { response ->
                     val successMessage = response.message?.takeIf { it.isNotBlank() }
@@ -171,12 +171,12 @@ class WorkOrdersViewModel(
             return
         }
 
-        val employeeId = employee.toIntOrNull()
-        val workOrderId = workOrder.toIntOrNull()
-        if (employeeId == null || workOrderId == null) {
+        if (!employee.isDigitsOnly() || !workOrder.isDigitsOnly()) {
             showMessage("Ingrese valores numéricos válidos")
             return
         }
+
+        val workOrderId = workOrder.toInt()
 
         setLoading(true)
         _uiState.update { it.copy(showClockOutDialog = false) }
@@ -236,15 +236,14 @@ class WorkOrdersViewModel(
             return
         }
 
-        val employeeId = employee.toIntOrNull()
-        if (employeeId == null) {
+        if (!employee.isDigitsOnly()) {
             showMessage("Ingrese un número de empleado válido")
             return
         }
 
         setLoading(true)
         viewModelScope.launch {
-            val result = repository.fetchUserStatus(employeeId)
+            val result = repository.fetchUserStatus(employee)
             result.fold(
                 onSuccess = { status ->
                     _uiState.update {
@@ -292,3 +291,5 @@ class WorkOrdersViewModel(
         }
     }
 }
+
+private fun String.isDigitsOnly(): Boolean = isNotEmpty() && all(Char::isDigit)
