@@ -1,5 +1,6 @@
 package com.example.terminal
 
+import android.media.MediaPlayer
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -33,6 +34,7 @@ import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -438,19 +440,73 @@ private fun NumericKeypad(
         modifier = modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
+        val context = LocalContext.current
+        val mediaPlayer = remember { MediaPlayer.create(context, R.raw.beep) }
+
+        DisposableEffect(Unit) {
+            onDispose {
+                mediaPlayer?.release()
+            }
+        }
+
+        fun playBeep() {
+            mediaPlayer?.let { player ->
+                if (player.isPlaying) {
+                    player.seekTo(0)
+                }
+                player.start()
+            }
+        }
+
         val keypadItems = listOf(
-            "1" to { onNumberClick("1") },
-            "2" to { onNumberClick("2") },
-            "3" to { onNumberClick("3") },
-            "4" to { onNumberClick("4") },
-            "5" to { onNumberClick("5") },
-            "6" to { onNumberClick("6") },
-            "7" to { onNumberClick("7") },
-            "8" to { onNumberClick("8") },
-            "9" to { onNumberClick("9") },
-            "Clear" to onClear,
-            "0" to { onNumberClick("0") },
-            "Enter" to onEnter
+            "1" to {
+                playBeep()
+                onNumberClick("1")
+            },
+            "2" to {
+                playBeep()
+                onNumberClick("2")
+            },
+            "3" to {
+                playBeep()
+                onNumberClick("3")
+            },
+            "4" to {
+                playBeep()
+                onNumberClick("4")
+            },
+            "5" to {
+                playBeep()
+                onNumberClick("5")
+            },
+            "6" to {
+                playBeep()
+                onNumberClick("6")
+            },
+            "7" to {
+                playBeep()
+                onNumberClick("7")
+            },
+            "8" to {
+                playBeep()
+                onNumberClick("8")
+            },
+            "9" to {
+                playBeep()
+                onNumberClick("9")
+            },
+            "Clear" to {
+                playBeep()
+                onClear()
+            },
+            "0" to {
+                playBeep()
+                onNumberClick("0")
+            },
+            "Enter" to {
+                playBeep()
+                onEnter()
+            }
         )
 
         LazyVerticalGrid(
