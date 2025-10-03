@@ -27,6 +27,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
@@ -61,6 +62,7 @@ import com.example.terminal.ui.theme.TerminalTheme
 import com.example.terminal.ui.workorders.WorkOrdersScreen
 import java.util.ArrayList
 import kotlinx.coroutines.launch
+import kotlin.math.roundToInt
 
 @Composable
 fun TerminalApp() {
@@ -73,6 +75,7 @@ fun TerminalApp() {
     }
     val userPrefs = remember { UserPrefs.create(context) }
     val serverAddress by userPrefs.serverAddress.collectAsState(initial = ApiClient.DEFAULT_BASE_URL)
+    val beepVolume by userPrefs.beepVolume.collectAsState(initial = 1f)
     var showSettingsDialog by rememberSaveable { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
 
@@ -141,6 +144,7 @@ fun TerminalApp() {
                 when (selectedTab) {
                     TerminalTab.CLOCK -> ClockTabContent(
                         loginStates = loginStates,
+                        beepVolume = beepVolume,
                         modifier = Modifier.fillMaxSize()
                     )
 
@@ -148,6 +152,7 @@ fun TerminalApp() {
 
                     TerminalTab.ISSUE_MATERIALS -> IssueMaterialsTabContent(
                         materialsStates = materialsStates,
+                        beepVolume = beepVolume,
                         modifier = Modifier.fillMaxSize()
                     )
                 }
@@ -157,11 +162,13 @@ fun TerminalApp() {
         if (showSettingsDialog) {
             ServerSettingsDialog(
                 initialAddress = serverAddress,
+                initialVolume = beepVolume,
                 onDismiss = { showSettingsDialog = false },
-                onSave = { newAddress ->
+                onSave = { newAddress, newVolume ->
                     showSettingsDialog = false
                     coroutineScope.launch {
                         userPrefs.saveServerAddress(newAddress)
+                        userPrefs.saveBeepVolume(newVolume)
                     }
                 }
             )
@@ -178,6 +185,7 @@ private enum class TerminalTab(val title: String) {
 @Composable
 private fun ClockTabContent(
     loginStates: SnapshotStateMap<Int, Boolean>,
+    beepVolume: Float,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -221,6 +229,7 @@ private fun ClockTabContent(
                 .weight(0.4f)
                 .fillMaxHeight()
                 .padding(24.dp),
+            beepVolume = beepVolume,
             onNumberClick = { digit -> inputValue += digit },
             onClear = { inputValue = "" },
             onEnter = {
@@ -247,11 +256,14 @@ private fun ClockTabContent(
 @Composable
 private fun ServerSettingsDialog(
     initialAddress: String,
+    initialVolume: Float,
     onDismiss: () -> Unit,
-    onSave: (String) -> Unit
+    onSave: (String, Float) -> Unit
 ) {
     var address by rememberSaveable(initialAddress) { mutableStateOf(initialAddress) }
+    var volume by rememberSaveable(initialVolume) { mutableStateOf(initialVolume) }
     val isValid = address.trim().isNotEmpty()
+    val volumePercentage = (volume * 100).roundToInt()
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -270,12 +282,23 @@ private fun ServerSettingsDialog(
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text(
+                            text = "Volumen del beep: $volumePercentage%",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                        Slider(
+                            value = volume,
+                            onValueChange = { volume = it },
+                            valueRange = 0f..1f
+                        )
+                    }
                 }
             }
         },
         confirmButton = {
             TextButton(
-                onClick = { onSave(address.trim()) },
+                onClick = { onSave(address.trim(), volume) },
                 enabled = isValid
             ) {
                 Text(text = "Guardar")
@@ -292,6 +315,7 @@ private fun ServerSettingsDialog(
 @Composable
 private fun IssueMaterialsTabContent(
     materialsStates: SnapshotStateMap<Int, MutableList<String>>,
+    beepVolume: Float,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -376,6 +400,7 @@ private fun IssueMaterialsTabContent(
                 .weight(0.4f)
                 .fillMaxHeight()
                 .padding(24.dp),
+            beepVolume = beepVolume,
             onNumberClick = { digit -> inputValue += digit },
             onClear = { inputValue = "" },
             onEnter = {
@@ -433,6 +458,7 @@ private fun DisplayValue(label: String, value: String) {
 @Composable
 private fun NumericKeypad(
     modifier: Modifier = Modifier,
+    beepVolume: Float = 1f,
     onNumberClick: (String) -> Unit,
     onClear: () -> Unit,
     onEnter: () -> Unit
@@ -475,7 +501,7 @@ private fun NumericKeypad(
 
         fun playBeep() {
             if (beepSoundId != 0) {
-                soundPool.play(beepSoundId, 1f, 1f, 1, 0, 1f)
+                soundPool.play(beepSoundId, beepVolume, beepVolume, 1, 0, 1f)
             }
         }
 
