@@ -2,6 +2,7 @@ package com.example.terminal.ui.workorders
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
@@ -53,9 +54,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.draw.drawWithContent
-import androidx.compose.ui.layout.offset
+import androidx.compose.foundation.layout.offset
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -367,15 +366,7 @@ private fun SelectableField(
                     it
                 }
             }
-            .drawWithContent {
-                drawContent()
-                val outline = shape.createOutline(size, layoutDirection, this)
-                drawOutline(
-                    outline = outline,
-                    color = borderColor,
-                    style = Stroke(width = borderWidth.toPx())
-                )
-            },
+            .border(BorderStroke(borderWidth, borderColor), shape),
         readOnly = true,
         enabled = enabled,
         isError = isError,
