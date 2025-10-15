@@ -151,10 +151,13 @@ private fun WorkOrdersForm(
     Column(
         modifier = modifier.fillMaxHeight(),
         verticalArrangement = Arrangement.Top,
-        horizontalAlignment = Alignment.Start
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
         if (!uiState.isEmployeeValidated) {
-            StepHeading(title = "Please enter or scan your user ID")
+            StepHeading(
+                title = "Please enter or scan your user ID",
+                modifier = Modifier.fillMaxWidth()
+            )
             Spacer(modifier = Modifier.height(24.dp))
             SelectableField(
                 label = "Employee #",
@@ -168,7 +171,9 @@ private fun WorkOrdersForm(
             Text(
                 text = employeeInstruction,
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface
+                color = MaterialTheme.colorScheme.onSurface,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth()
             )
             if (uiState.employeeValidationError != null) {
                 Spacer(modifier = Modifier.height(8.dp))
@@ -179,11 +184,21 @@ private fun WorkOrdersForm(
                 )
             }
         } else {
+            if (uiState.userStatus != null) {
+                EmployeeStatusCard(
+                    status = uiState.userStatus,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(modifier = Modifier.height(24.dp))
+            }
+
             StepHeading(
-                title = workerName ?: "Nombre y Apellidos de trabajador",
-                subtitle = "Please enter or scan your assembly number"
+                title = "Please enter or scan your assembly number",
+                subtitle = workerName,
+                modifier = Modifier.fillMaxWidth()
             )
             Spacer(modifier = Modifier.height(24.dp))
+
             SelectableField(
                 label = "Assembly #",
                 value = uiState.workOrderId,
@@ -195,51 +210,52 @@ private fun WorkOrdersForm(
             Text(
                 text = workOrderInstruction,
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface
+                color = MaterialTheme.colorScheme.onSurface,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth()
             )
-
-            if (uiState.userStatus != null) {
-                Spacer(modifier = Modifier.height(24.dp))
-                EmployeeStatusCard(status = uiState.userStatus)
-            }
-
             Spacer(modifier = Modifier.height(32.dp))
-            Button(
-                onClick = onClockIn,
-                enabled = isClockInEnabled,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(72.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary
-                )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                Text(
-                    text = "Clock IN WO",
-                    style = MaterialTheme.typography.titleLarge,
-                    color = MaterialTheme.colorScheme.onPrimary
-                )
-            }
-            Spacer(modifier = Modifier.height(16.dp))
-            Button(
-                onClick = onClockOut,
-                enabled = isClockOutEnabled,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(72.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary,
-                    disabledContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.4f),
-                    disabledContentColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.6f)
-                )
-            ) {
-                Text(
-                    text = "Clock OUT WO",
-                    style = MaterialTheme.typography.titleLarge,
-                    color = MaterialTheme.colorScheme.onPrimary
-                )
+                Button(
+                    onClick = onClockIn,
+                    enabled = isClockInEnabled,
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(72.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary
+                    )
+                ) {
+                    Text(
+                        text = "Clock IN WO",
+                        style = MaterialTheme.typography.titleLarge,
+                        color = MaterialTheme.colorScheme.onPrimary
+                    )
+                }
+
+                Button(
+                    onClick = onClockOut,
+                    enabled = isClockOutEnabled,
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(72.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary,
+                        disabledContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.4f),
+                        disabledContentColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.6f)
+                    )
+                ) {
+                    Text(
+                        text = "Clock OUT WO",
+                        style = MaterialTheme.typography.titleLarge,
+                        color = MaterialTheme.colorScheme.onPrimary
+                    )
+                }
             }
         }
     }
@@ -253,19 +269,24 @@ private fun StepHeading(
 ) {
     Column(
         modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
+            modifier = Modifier.fillMaxWidth(),
             text = title,
-            style = MaterialTheme.typography.titleLarge,
+            style = MaterialTheme.typography.headlineMedium,
             color = MaterialTheme.colorScheme.onSurface,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Bold,
+            textAlign = TextAlign.Center
         )
         if (subtitle != null) {
             Text(
+                modifier = Modifier.fillMaxWidth(),
                 text = subtitle,
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurface
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+                textAlign = TextAlign.Center
             )
         }
     }
@@ -331,7 +352,8 @@ private fun EmployeeStatusCard(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
+            containerColor = MaterialTheme.colorScheme.primaryContainer,
+            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
         )
     ) {
         Column(
@@ -344,18 +366,18 @@ private fun EmployeeStatusCard(
                 Text(
                     text = "Employee",
                     style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
                 )
                 Text(
                     text = "${status.firstName} ${status.lastName}",
                     style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
                     fontWeight = FontWeight.SemiBold
                 )
                 Text(
                     text = "ID: ${status.userId}",
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
                 )
             }
 
@@ -365,7 +387,7 @@ private fun EmployeeStatusCard(
                     Text(
                         text = "Active Work Order",
                         style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
                     )
                     WorkOrderDetailRow("Collection ID", workOrder.workOrderCollectionId?.toString())
                     WorkOrderDetailRow("Work Order #", workOrder.workOrderNumber)
@@ -379,7 +401,7 @@ private fun EmployeeStatusCard(
                 Text(
                     text = "No active work order",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
                 )
             }
         }
@@ -396,12 +418,12 @@ private fun WorkOrderDetailRow(label: String, value: String?) {
         Text(
             text = label,
             style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.9f)
         )
         Text(
             text = value?.takeIf { it.isNotBlank() } ?: "--",
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurface,
+            color = MaterialTheme.colorScheme.onPrimaryContainer,
             textAlign = TextAlign.End
         )
     }
@@ -418,7 +440,8 @@ private fun WorkOrdersKeypad(
         modifier = modifier,
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
+            containerColor = MaterialTheme.colorScheme.primaryContainer,
+            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
         )
     ) {
         val keypadItems = listOf(
@@ -440,8 +463,8 @@ private fun WorkOrdersKeypad(
             columns = GridCells.Fixed(3),
             modifier = Modifier
                 .fillMaxSize()
-                .padding(24.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+                .padding(16.dp),
+            verticalArrangement = Arrangement.SpaceEvenly,
             horizontalArrangement = Arrangement.spacedBy(16.dp),
             userScrollEnabled = false
         ) {
@@ -476,7 +499,7 @@ private fun KeypadButton(
         ) {
             Text(
                 text = label,
-                fontSize = 28.sp,
+                fontSize = 32.sp,
                 textAlign = TextAlign.Center,
                 color = MaterialTheme.colorScheme.onPrimary,
                 fontWeight = FontWeight.SemiBold
