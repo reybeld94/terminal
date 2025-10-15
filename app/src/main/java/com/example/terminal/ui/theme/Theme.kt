@@ -13,27 +13,39 @@ import androidx.compose.ui.platform.LocalContext
 private val DarkColorScheme = darkColorScheme(
     primary = TerminalPrimary,
     onPrimary = TerminalOnColor,
+    primaryContainer = TerminalSurfaceVariant,
+    onPrimaryContainer = TerminalOnColor,
     secondary = TerminalSecondary,
     onSecondary = TerminalOnColor,
     tertiary = TerminalTertiary,
     onTertiary = TerminalOnColor,
-    background = TerminalBackground,
+    background = TerminalBackgroundBottom,
     onBackground = TerminalOnColor,
     surface = TerminalSurface,
-    onSurface = TerminalOnColor
+    onSurface = TerminalOnColor,
+    surfaceVariant = TerminalSurfaceVariant,
+    onSurfaceVariant = TerminalOnSurfaceVariant,
+    outline = TerminalOutline,
+    outlineVariant = TerminalOutline.copy(alpha = 0.6f)
 )
 
 private val LightColorScheme = lightColorScheme(
     primary = TerminalPrimary,
     onPrimary = TerminalOnColor,
+    primaryContainer = TerminalSurfaceVariant,
+    onPrimaryContainer = TerminalOnColor,
     secondary = TerminalSecondary,
     onSecondary = TerminalOnColor,
     tertiary = TerminalTertiary,
     onTertiary = TerminalOnColor,
-    background = TerminalBackground,
+    background = TerminalBackgroundBottom,
     onBackground = TerminalOnColor,
     surface = TerminalSurface,
-    onSurface = TerminalOnColor
+    onSurface = TerminalOnColor,
+    surfaceVariant = TerminalSurfaceVariant,
+    onSurfaceVariant = TerminalOnSurfaceVariant,
+    outline = TerminalOutline,
+    outlineVariant = TerminalOutline.copy(alpha = 0.6f)
 )
 
 @Composable
