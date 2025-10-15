@@ -35,7 +35,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedButtonDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -266,7 +265,7 @@ private fun WorkOrdersForm(
                     modifier = Modifier
                         .weight(1f)
                         .height(60.dp),
-                    colors = OutlinedButtonDefaults.outlinedButtonColors(
+                    colors = ButtonDefaults.outlinedButtonColors(
                         contentColor = MaterialTheme.colorScheme.onSurface,
                         disabledContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
                     ),
