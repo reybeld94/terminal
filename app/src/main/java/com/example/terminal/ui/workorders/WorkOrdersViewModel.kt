@@ -10,6 +10,7 @@ import com.example.terminal.data.repository.UserStatus
 import com.example.terminal.data.repository.WorkOrdersRepository
 import com.example.terminal.di.AppContainer
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -34,6 +35,8 @@ data class WorkOrdersUiState(
     val userStatus: UserStatus? = null
 )
 
+private const val WORK_ORDER_TIMEOUT_MS = 10_000L
+
 class WorkOrdersViewModel(
     private val repository: WorkOrdersRepository,
     private val userPrefs: UserPrefs
@@ -43,6 +46,7 @@ class WorkOrdersViewModel(
     val uiState: StateFlow<WorkOrdersUiState> = _uiState.asStateFlow()
 
     private var saveEmployeeJob: Job? = null
+    private var workOrderTimeoutJob: Job? = null
 
     init {
         viewModelScope.launch {
@@ -73,8 +77,15 @@ class WorkOrdersViewModel(
     fun setDigit(digit: String) {
         require(digit.length == 1 && digit[0].isDigit())
         when (_uiState.value.activeField) {
-            WorkOrderInputField.EMPLOYEE -> updateEmployeeId(_uiState.value.employeeId + digit)
-            WorkOrderInputField.WORK_ORDER -> updateWorkOrderId(_uiState.value.workOrderId + digit)
+            WorkOrderInputField.EMPLOYEE -> {
+                cancelWorkOrderTimeout()
+                updateEmployeeId(_uiState.value.employeeId + digit)
+            }
+
+            WorkOrderInputField.WORK_ORDER -> {
+                cancelWorkOrderTimeout()
+                updateWorkOrderId(_uiState.value.workOrderId + digit)
+            }
         }
     }
 
@@ -209,6 +220,7 @@ class WorkOrdersViewModel(
     }
 
     private fun updateEmployeeId(value: String) {
+        cancelWorkOrderTimeout()
         _uiState.update {
             it.copy(
                 employeeId = value,
@@ -227,6 +239,13 @@ class WorkOrdersViewModel(
 
     private fun updateWorkOrderId(value: String) {
         _uiState.update { it.copy(workOrderId = value) }
+        if (value.isBlank()) {
+            if (_uiState.value.isEmployeeValidated) {
+                startWorkOrderTimeout()
+            }
+        } else {
+            cancelWorkOrderTimeout()
+        }
     }
 
     private fun validateEmployee() {
@@ -254,6 +273,7 @@ class WorkOrdersViewModel(
                             activeField = WorkOrderInputField.WORK_ORDER
                         )
                     }
+                    startWorkOrderTimeout()
                 },
                 onFailure = { error ->
                     _uiState.update {
@@ -266,6 +286,39 @@ class WorkOrdersViewModel(
                 }
             )
             setLoading(false)
+        }
+    }
+
+    private fun startWorkOrderTimeout() {
+        cancelWorkOrderTimeout()
+        workOrderTimeoutJob = viewModelScope.launch {
+            delay(WORK_ORDER_TIMEOUT_MS)
+            val shouldReset = _uiState.value.let { state ->
+                state.isEmployeeValidated && state.workOrderId.isBlank()
+            }
+            if (shouldReset) {
+                resetToEmployeeStep()
+            }
+        }
+    }
+
+    private fun cancelWorkOrderTimeout() {
+        workOrderTimeoutJob?.cancel()
+        workOrderTimeoutJob = null
+    }
+
+    private fun resetToEmployeeStep() {
+        cancelWorkOrderTimeout()
+        saveEmployeeJob?.cancel()
+        _uiState.update {
+            it.copy(
+                employeeId = "",
+                workOrderId = "",
+                isEmployeeValidated = false,
+                employeeValidationError = null,
+                userStatus = null,
+                activeField = WorkOrderInputField.EMPLOYEE
+            )
         }
     }
 

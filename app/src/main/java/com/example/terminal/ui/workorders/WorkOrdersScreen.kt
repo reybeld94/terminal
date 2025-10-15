@@ -140,15 +140,12 @@ private fun WorkOrdersForm(
         uiState.workOrderId.isNotBlank() &&
         !uiState.isLoading
     val isClockOutEnabled = isClockInEnabled && !uiState.isLoading
-    val employeeInstruction = if (uiState.isEmployeeValidated) {
-        "Employee validated. Continue with the Work Order step."
-    } else {
-        "Enter your Employee ID and press Enter on the keypad to validate."
-    }
-    val workOrderInstruction = if (uiState.isEmployeeValidated) {
-        "Enter or scan the Work Order number and use the keypad."
-    } else {
-        "Validate the employee to unlock this step."
+    val employeeInstruction = "Enter your Employee ID and press Enter on the keypad to validate."
+    val workOrderInstruction = "Use the keypad to enter or scan the assembly number and press Enter to continue."
+    val workerName = uiState.userStatus?.let { status ->
+        listOfNotNull(status.firstName, status.lastName)
+            .joinToString(separator = " ")
+            .takeIf { it.isNotBlank() }
     }
 
     Column(
@@ -162,58 +159,58 @@ private fun WorkOrdersForm(
             color = MaterialTheme.colorScheme.onSurface
         )
         Spacer(modifier = Modifier.height(24.dp))
-        Text(
-            text = "Step 1 · Employee",
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onSurface
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        SelectableField(
-            label = "Employee #",
-            value = uiState.employeeId,
-            isActive = uiState.activeField == WorkOrderInputField.EMPLOYEE,
-            onClick = onEmployeeClick,
-            enabled = !uiState.isLoading,
-            isError = uiState.employeeValidationError != null
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = employeeInstruction,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurface
-        )
-        if (uiState.employeeValidationError != null) {
+
+        if (!uiState.isEmployeeValidated) {
+            StepHeading(title = "Please enter or scan your user ID")
+            Spacer(modifier = Modifier.height(24.dp))
+            SelectableField(
+                label = "Employee #",
+                value = uiState.employeeId,
+                isActive = uiState.activeField == WorkOrderInputField.EMPLOYEE,
+                onClick = onEmployeeClick,
+                enabled = !uiState.isLoading,
+                isError = uiState.employeeValidationError != null
+            )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = uiState.employeeValidationError,
+                text = employeeInstruction,
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.error
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            if (uiState.employeeValidationError != null) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = uiState.employeeValidationError,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.error
+                )
+            }
+        } else {
+            StepHeading(
+                title = workerName ?: "Nombre y Apellidos de trabajador",
+                subtitle = "Please enter or scan your assembly number"
+            )
+            Spacer(modifier = Modifier.height(24.dp))
+            SelectableField(
+                label = "Assembly #",
+                value = uiState.workOrderId,
+                isActive = uiState.activeField == WorkOrderInputField.WORK_ORDER,
+                onClick = onWorkOrderClick,
+                enabled = uiState.isEmployeeValidated && !uiState.isLoading
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = workOrderInstruction,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface
             )
         }
-        if (uiState.userStatus != null) {
-            Spacer(modifier = Modifier.height(16.dp))
+
+        if (uiState.isEmployeeValidated && uiState.userStatus != null) {
+            Spacer(modifier = Modifier.height(24.dp))
             EmployeeStatusCard(status = uiState.userStatus)
         }
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(
-            text = "Step 2 · Work Order",
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onSurface
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        SelectableField(
-            label = "Work Order #",
-            value = uiState.workOrderId,
-            isActive = uiState.activeField == WorkOrderInputField.WORK_ORDER,
-            onClick = onWorkOrderClick,
-            enabled = uiState.isEmployeeValidated && !uiState.isLoading
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = workOrderInstruction,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurface
-        )
+
         Spacer(modifier = Modifier.height(32.dp))
         Button(
             onClick = onClockIn,
@@ -250,6 +247,32 @@ private fun WorkOrdersForm(
                 text = "Clock OUT WO",
                 style = MaterialTheme.typography.titleLarge,
                 color = MaterialTheme.colorScheme.onPrimary
+            )
+        }
+    }
+}
+
+@Composable
+private fun StepHeading(
+    title: String,
+    subtitle: String? = null,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleLarge,
+            color = MaterialTheme.colorScheme.onSurface,
+            fontWeight = FontWeight.Bold
+        )
+        if (subtitle != null) {
+            Text(
+                text = subtitle,
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurface
             )
         }
     }
