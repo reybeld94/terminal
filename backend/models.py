@@ -18,15 +18,22 @@ class ApiResponse(StrictBaseModel):
 
 class ClockInRequest(StrictBaseModel):
     workOrderAssemblyId: int
-    userId: str
+    userId: int
     divisionFK: Literal[1]
     deviceDate: str
 
-    @validator("userId")
-    def validate_user_id(cls, value: str) -> str:
-        if not value.isdigit():
-            raise ValueError("userId must contain only digits")
-        return value
+    @validator("userId", pre=True)
+    def validate_user_id(cls, value: int | str) -> int:
+        if isinstance(value, int):
+            return value
+
+        if isinstance(value, str):
+            stripped_value = value.strip()
+            if not stripped_value.isdigit():
+                raise ValueError("userId must contain only digits")
+            return int(stripped_value)
+
+        raise ValueError("userId must be provided as an integer value")
 
     @validator("deviceDate")
     def validate_device_date(cls, value: str) -> str:
