@@ -4,6 +4,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -52,11 +53,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.layout.offset
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -105,7 +109,7 @@ fun WorkOrdersScreen(
             Row(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(start = 40.dp, top = 24.dp, end = 24.dp, bottom = 24.dp),
+                    .padding(start = 52.dp, top = 24.dp, end = 24.dp, bottom = 24.dp),
                 verticalAlignment = Alignment.Top
             ) {
                 WorkOrdersForm(
@@ -162,7 +166,7 @@ private fun WorkOrdersForm(
     Column(
         modifier = modifier
             .fillMaxHeight()
-            .padding(top = 16.dp),
+            .padding(top = 24.dp),
         verticalArrangement = Arrangement.Top,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -171,7 +175,7 @@ private fun WorkOrdersForm(
                 title = "Please enter or scan your user ID",
                 modifier = Modifier.fillMaxWidth()
             )
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(24.dp))
             SelectableField(
                 label = "Employee #",
                 value = uiState.employeeId,
@@ -180,12 +184,12 @@ private fun WorkOrdersForm(
                 enabled = !uiState.isLoading,
                 isError = uiState.employeeValidationError != null
             )
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = employeeInstruction,
                 style = MaterialTheme.typography.bodyMedium.copy(
                     fontSize = 15.sp,
-                    fontWeight = FontWeight.Medium
+                    fontWeight = FontWeight.Normal
                 ),
                 color = TerminalHelperText,
                 textAlign = TextAlign.Center,
@@ -200,7 +204,7 @@ private fun WorkOrdersForm(
                 )
             }
         } else {
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(34.dp))
             if (uiState.userStatus != null) {
                 EmployeeStatusCard(
                     status = uiState.userStatus,
@@ -213,7 +217,7 @@ private fun WorkOrdersForm(
                 title = "Please enter or scan your assembly number",
                 modifier = Modifier.fillMaxWidth()
             )
-            Spacer(modifier = Modifier.height(14.dp))
+            Spacer(modifier = Modifier.height(6.dp))
 
             SelectableField(
                 label = "Assembly #",
@@ -222,21 +226,21 @@ private fun WorkOrdersForm(
                 onClick = onWorkOrderClick,
                 enabled = uiState.isEmployeeValidated && !uiState.isLoading
             )
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = workOrderInstruction,
                 style = MaterialTheme.typography.bodyMedium.copy(
                     fontSize = 15.sp,
-                    fontWeight = FontWeight.Medium
+                    fontWeight = FontWeight.Normal
                 ),
                 color = TerminalHelperText,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth()
             )
-            Spacer(modifier = Modifier.height(28.dp))
+            Spacer(modifier = Modifier.height(22.dp))
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(26.dp)
+                horizontalArrangement = Arrangement.spacedBy(34.dp)
             ) {
                 Button(
                     onClick = onClockIn,
@@ -272,9 +276,9 @@ private fun WorkOrdersForm(
                     border = BorderStroke(
                         width = 1.dp,
                         color = if (isClockOutEnabled) {
-                            MaterialTheme.colorScheme.outline
+                            MaterialTheme.colorScheme.outline.copy(alpha = 0.8f)
                         } else {
-                            MaterialTheme.colorScheme.outline.copy(alpha = 0.4f)
+                            MaterialTheme.colorScheme.outline.copy(alpha = 0.32f)
                         }
                     )
                 ) {
@@ -304,9 +308,11 @@ private fun StepHeading(
         Text(
             modifier = Modifier.fillMaxWidth(),
             text = title,
-            style = MaterialTheme.typography.headlineMedium,
+            style = MaterialTheme.typography.headlineMedium.copy(
+                fontSize = 26.sp,
+                fontWeight = FontWeight.SemiBold
+            ),
             color = MaterialTheme.colorScheme.onSurface,
-            fontWeight = FontWeight.SemiBold,
             textAlign = TextAlign.Center
         )
         if (subtitle != null) {
@@ -332,7 +338,18 @@ private fun SelectableField(
     isError: Boolean = false
 ) {
     val interactionSource = remember { MutableInteractionSource() }
+    val isFocused by interactionSource.collectIsFocusedAsState()
     val displayValue = if (value.isBlank()) "" else value
+    val shape = RoundedCornerShape(14.dp)
+    val activeColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f)
+    val inactiveColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.6f)
+    val borderColor = when {
+        !enabled -> MaterialTheme.colorScheme.outline.copy(alpha = 0.4f)
+        isError -> MaterialTheme.colorScheme.error
+        isActive || isFocused -> activeColor
+        else -> inactiveColor
+    }
+    val borderWidth = if (isActive || isFocused) 3.dp else 1.5.dp
 
     OutlinedTextField(
         value = displayValue,
@@ -349,26 +366,41 @@ private fun SelectableField(
                 } else {
                     it
                 }
+            }
+            .drawWithContent {
+                drawContent()
+                val outline = shape.createOutline(size, layoutDirection, this)
+                drawOutline(
+                    outline = outline,
+                    color = borderColor,
+                    style = Stroke(width = borderWidth.toPx())
+                )
             },
         readOnly = true,
         enabled = enabled,
         isError = isError,
         label = { Text(text = label, fontWeight = FontWeight.Medium) },
-        placeholder = { Text(text = "--", fontWeight = FontWeight.Medium) },
+        placeholder = { Text(text = "--", fontWeight = FontWeight.Medium, fontSize = 17.sp) },
         singleLine = true,
+        shape = shape,
+        interactionSource = interactionSource,
         colors = OutlinedTextFieldDefaults.colors(
-            focusedBorderColor = MaterialTheme.colorScheme.primary,
-            unfocusedBorderColor = if (isActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline,
-            disabledBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
+            focusedBorderColor = Color.Transparent,
+            unfocusedBorderColor = Color.Transparent,
+            disabledBorderColor = Color.Transparent,
+            errorBorderColor = Color.Transparent,
+            focusedContainerColor = MaterialTheme.colorScheme.surface,
+            unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+            disabledContainerColor = MaterialTheme.colorScheme.surface,
+            errorContainerColor = MaterialTheme.colorScheme.surface,
             cursorColor = Color.Transparent,
             focusedTextColor = MaterialTheme.colorScheme.onSurface,
             unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
-            focusedLabelColor = MaterialTheme.colorScheme.primary,
-            unfocusedLabelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
-            disabledLabelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
             disabledTextColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
-            errorBorderColor = MaterialTheme.colorScheme.error,
-            errorLabelColor = MaterialTheme.colorScheme.error
+            errorLabelColor = MaterialTheme.colorScheme.error,
+            focusedLabelColor = activeColor,
+            unfocusedLabelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+            disabledLabelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
         )
     )
 }
@@ -382,14 +414,14 @@ private fun EmployeeStatusCard(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.85f),
             contentColor = MaterialTheme.colorScheme.onSurfaceVariant
         )
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(12.dp),
+                .padding(horizontal = 12.dp, vertical = 6.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -398,12 +430,6 @@ private fun EmployeeStatusCard(
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontWeight = FontWeight.Medium
-                )
-                Text(
-                    text = "${status.firstName} ${status.lastName}",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontWeight = FontWeight.SemiBold
                 )
                 Text(
                     text = "ID: ${status.userId}",
@@ -470,14 +496,16 @@ private fun WorkOrdersKeypad(
     onEnter: () -> Unit
 ) {
     Card(
-        modifier = modifier.fillMaxHeight(0.95f),
+        modifier = modifier
+            .fillMaxHeight(0.95f)
+            .offset(y = (-12).dp),
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(
             containerColor = TerminalKeypadBackground,
             contentColor = MaterialTheme.colorScheme.onSurface
         ),
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
-        elevation = CardDefaults.cardElevation(defaultElevation = 12.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 10.dp)
     ) {
         val keypadItems = buildList {
             listOf("1", "2", "3", "4", "5", "6", "7", "8", "9").forEach { digit ->
@@ -487,9 +515,10 @@ private fun WorkOrdersKeypad(
                         onClick = { onNumberClick(digit) },
                         backgroundColor = TerminalKeypadButton,
                         contentColor = MaterialTheme.colorScheme.onSurface,
-                        fontSize = 28.sp,
+                        fontSize = 30.sp,
                         fontWeight = FontWeight.SemiBold,
-                        borderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.6f)
+                        borderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.6f),
+                        letterSpacing = 1.sp
                     )
                 )
             }
@@ -501,7 +530,8 @@ private fun WorkOrdersKeypad(
                     contentColor = TerminalHelperText,
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Medium,
-                    borderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
+                    borderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.24f),
+                    letterSpacing = 0.5.sp
                 )
             )
             add(
@@ -510,9 +540,10 @@ private fun WorkOrdersKeypad(
                     onClick = { onNumberClick("0") },
                     backgroundColor = TerminalKeypadButton,
                     contentColor = MaterialTheme.colorScheme.onSurface,
-                    fontSize = 28.sp,
+                    fontSize = 30.sp,
                     fontWeight = FontWeight.SemiBold,
-                    borderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.6f)
+                    borderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.6f),
+                    letterSpacing = 1.sp
                 )
             )
             add(
@@ -523,7 +554,8 @@ private fun WorkOrdersKeypad(
                     contentColor = MaterialTheme.colorScheme.onTertiary,
                     fontSize = 20.sp,
                     fontWeight = FontWeight.SemiBold,
-                    borderColor = Color.Transparent
+                    borderColor = Color.Transparent,
+                    letterSpacing = 0.5.sp
                 )
             )
         }
@@ -552,11 +584,11 @@ private fun KeypadButton(
         modifier = Modifier
             .fillMaxWidth()
             .aspectRatio(1f),
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(10.dp),
         color = item.backgroundColor,
         contentColor = item.contentColor,
-        shadowElevation = 6.dp,
-        tonalElevation = 2.dp,
+        shadowElevation = 5.dp,
+        tonalElevation = 1.5.dp,
         border = item.borderColor?.let { BorderStroke(1.dp, it) },
         onClick = item.onClick
     ) {
@@ -569,7 +601,8 @@ private fun KeypadButton(
                 fontSize = item.fontSize,
                 textAlign = TextAlign.Center,
                 color = item.contentColor,
-                fontWeight = item.fontWeight
+                fontWeight = item.fontWeight,
+                letterSpacing = item.letterSpacing
             )
         }
     }
@@ -582,7 +615,8 @@ private data class KeypadItem(
     val contentColor: Color,
     val fontSize: TextUnit,
     val fontWeight: FontWeight,
-    val borderColor: Color?
+    val borderColor: Color?,
+    val letterSpacing: TextUnit
 )
 
 @Composable
