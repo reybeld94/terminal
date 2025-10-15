@@ -496,12 +496,37 @@ private fun WorkOrdersKeypad(
             border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
             elevation = CardDefaults.cardElevation(defaultElevation = 10.dp)
         ) {
-        val keypadItems = buildList {
-            listOf("1", "2", "3", "4", "5", "6", "7", "8", "9").forEach { digit ->
+            val keypadItems = buildList {
+                listOf("1", "2", "3", "4", "5", "6", "7", "8", "9").forEach { digit ->
+                    add(
+                        KeypadItem(
+                            label = digit,
+                            onClick = { onNumberClick(digit) },
+                            backgroundColor = TerminalKeypadButton,
+                            contentColor = MaterialTheme.colorScheme.onSurface,
+                            fontSize = 30.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            borderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.6f),
+                            letterSpacing = 1.sp
+                        )
+                    )
+                }
                 add(
                     KeypadItem(
-                        label = digit,
-                        onClick = { onNumberClick(digit) },
+                        label = "Clear",
+                        onClick = onClear,
+                        backgroundColor = TerminalKeypadClear,
+                        contentColor = TerminalHelperText,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Medium,
+                        borderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.24f),
+                        letterSpacing = 0.5.sp
+                    )
+                )
+                add(
+                    KeypadItem(
+                        label = "0",
+                        onClick = { onNumberClick("0") },
                         backgroundColor = TerminalKeypadButton,
                         contentColor = MaterialTheme.colorScheme.onSurface,
                         fontSize = 30.sp,
@@ -510,56 +535,32 @@ private fun WorkOrdersKeypad(
                         letterSpacing = 1.sp
                     )
                 )
+                add(
+                    KeypadItem(
+                        label = "Enter",
+                        onClick = onEnter,
+                        backgroundColor = TerminalKeypadEnter,
+                        contentColor = MaterialTheme.colorScheme.onTertiary,
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        borderColor = Color.Transparent,
+                        letterSpacing = 0.5.sp
+                    )
+                )
             }
-            add(
-                KeypadItem(
-                    label = "Clear",
-                    onClick = onClear,
-                    backgroundColor = TerminalKeypadClear,
-                    contentColor = TerminalHelperText,
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Medium,
-                    borderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.24f),
-                    letterSpacing = 0.5.sp
-                )
-            )
-            add(
-                KeypadItem(
-                    label = "0",
-                    onClick = { onNumberClick("0") },
-                    backgroundColor = TerminalKeypadButton,
-                    contentColor = MaterialTheme.colorScheme.onSurface,
-                    fontSize = 30.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    borderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.6f),
-                    letterSpacing = 1.sp
-                )
-            )
-            add(
-                KeypadItem(
-                    label = "Enter",
-                    onClick = onEnter,
-                    backgroundColor = TerminalKeypadEnter,
-                    contentColor = MaterialTheme.colorScheme.onTertiary,
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    borderColor = Color.Transparent,
-                    letterSpacing = 0.5.sp
-                )
-            )
-        }
 
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(3),
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            userScrollEnabled = false
-        ) {
-            items(keypadItems, key = { it.label }) { item ->
-                KeypadButton(item)
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(3),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(20.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                userScrollEnabled = false
+            ) {
+                items(keypadItems, key = { it.label }) { item ->
+                    KeypadButton(item)
+                }
             }
         }
     }
