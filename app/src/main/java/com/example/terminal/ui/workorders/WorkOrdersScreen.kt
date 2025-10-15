@@ -46,7 +46,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.foundation.layout.offset
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -98,7 +97,8 @@ fun WorkOrdersScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(start = 32.dp, top = 12.dp, end = 24.dp, bottom = 12.dp),
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.Top,
+                horizontalArrangement = Arrangement.spacedBy(36.dp)
             ) {
                 WorkOrdersForm(
                     modifier = Modifier.weight(0.6f),
@@ -152,9 +152,7 @@ private fun WorkOrdersForm(
     Column(
         modifier = modifier
             .fillMaxHeight()
-            .padding(top = 24.dp)
-            .offset(y = (-36).dp),
-        verticalArrangement = Arrangement.Top,
+            .padding(top = 24.dp, bottom = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         if (!uiState.isEmployeeValidated) {
@@ -190,100 +188,111 @@ private fun WorkOrdersForm(
                     color = MaterialTheme.colorScheme.error
                 )
             }
+            Spacer(modifier = Modifier.weight(1f))
         } else {
-            Spacer(modifier = Modifier.height(40.dp))
-            uiState.userStatus?.let { status ->
-                EmployeeStatusCard(
-                    status = status,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                Spacer(modifier = Modifier.height(20.dp))
-            }
-
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(1f, fill = false),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
+                    .weight(1f),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                StepHeading(
-                    title = "Please enter or scan your assembly number",
-                    modifier = Modifier.fillMaxWidth()
-                )
-                Spacer(modifier = Modifier.height(12.dp))
+                uiState.userStatus?.let { status ->
+                    EmployeeStatusCard(
+                        status = status,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Spacer(modifier = Modifier.height(28.dp))
+                }
 
-                SelectableField(
-                    label = "Assembly #",
-                    value = uiState.workOrderId,
-                    isActive = uiState.activeField == WorkOrderInputField.WORK_ORDER,
-                    onClick = onWorkOrderClick,
-                    enabled = uiState.isEmployeeValidated && !uiState.isLoading
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        StepHeading(
+                            title = "Please enter or scan your assembly number",
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        SelectableField(
+                            label = "Assembly #",
+                            value = uiState.workOrderId,
+                            isActive = uiState.activeField == WorkOrderInputField.WORK_ORDER,
+                            onClick = onWorkOrderClick,
+                            enabled = uiState.isEmployeeValidated && !uiState.isLoading
+                        )
+                        Spacer(modifier = Modifier.height(10.dp))
+                        Text(
+                            text = workOrderInstruction,
+                            style = MaterialTheme.typography.bodyMedium.copy(
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Normal
+                            ),
+                            color = TerminalHelperText,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                }
+            }
+        }
+        Spacer(modifier = Modifier.height(24.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(34.dp)
+        ) {
+            Button(
+                onClick = onClockIn,
+                enabled = isClockInEnabled,
+                modifier = Modifier
+                    .weight(1f)
+                    .height(60.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.tertiary,
+                    contentColor = MaterialTheme.colorScheme.onTertiary,
+                    disabledContainerColor = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.4f),
+                    disabledContentColor = MaterialTheme.colorScheme.onTertiary.copy(alpha = 0.6f)
                 )
-                Spacer(modifier = Modifier.height(8.dp))
+            ) {
                 Text(
-                    text = workOrderInstruction,
-                    style = MaterialTheme.typography.bodyMedium.copy(
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.Normal
-                    ),
-                    color = TerminalHelperText,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth()
+                    text = "Clock IN WO",
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.onTertiary,
+                    fontWeight = FontWeight.SemiBold
                 )
             }
-            Spacer(modifier = Modifier.height(16.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(34.dp)
-            ) {
-                Button(
-                    onClick = onClockIn,
-                    enabled = isClockInEnabled,
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(60.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.tertiary,
-                        contentColor = MaterialTheme.colorScheme.onTertiary,
-                        disabledContainerColor = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.4f),
-                        disabledContentColor = MaterialTheme.colorScheme.onTertiary.copy(alpha = 0.6f)
-                    )
-                ) {
-                    Text(
-                        text = "Clock IN WO",
-                        style = MaterialTheme.typography.titleLarge,
-                        color = MaterialTheme.colorScheme.onTertiary,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                }
 
-                OutlinedButton(
-                    onClick = onClockOut,
-                    enabled = isClockOutEnabled,
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(60.dp),
-                    colors = ButtonDefaults.outlinedButtonColors(
-                        contentColor = MaterialTheme.colorScheme.onSurface,
-                        disabledContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
-                    ),
-                    border = BorderStroke(
-                        width = 1.dp,
-                        color = if (isClockOutEnabled) {
-                            MaterialTheme.colorScheme.outline.copy(alpha = 0.8f)
-                        } else {
-                            MaterialTheme.colorScheme.outline.copy(alpha = 0.32f)
-                        }
-                    )
-                ) {
-                    Text(
-                        text = "Clock OUT WO",
-                        style = MaterialTheme.typography.titleLarge,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                }
+            OutlinedButton(
+                onClick = onClockOut,
+                enabled = isClockOutEnabled,
+                modifier = Modifier
+                    .weight(1f)
+                    .height(60.dp),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = MaterialTheme.colorScheme.onSurface,
+                    disabledContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
+                ),
+                border = BorderStroke(
+                    width = 1.dp,
+                    color = if (isClockOutEnabled) {
+                        MaterialTheme.colorScheme.outline.copy(alpha = 0.8f)
+                    } else {
+                        MaterialTheme.colorScheme.outline.copy(alpha = 0.32f)
+                    }
+                )
+            ) {
+                Text(
+                    text = "Clock OUT WO",
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontWeight = FontWeight.SemiBold
+                )
             }
         }
     }
@@ -399,56 +408,64 @@ private fun EmployeeStatusCard(
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.85f),
+            containerColor = Color.Transparent,
             contentColor = MaterialTheme.colorScheme.onSurfaceVariant
-        )
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 10.dp),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
     ) {
-        Column(
+        Box(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 12.dp, vertical = 6.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(
-                    text = "Employee",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontWeight = FontWeight.Medium
-                )
-                Text(
-                    text = "ID: ${status.userId}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
-                    fontWeight = FontWeight.Medium
-                )
-            }
-
-            val workOrder = status.activeWorkOrder
-            if (workOrder != null) {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(
-                        text = "Active Work Order",
-                        style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        fontWeight = FontWeight.Medium
+                .background(
+                    brush = Brush.verticalGradient(
+                        colors = listOf(TerminalKeypadButton, TerminalKeypadBackground)
                     )
-                    WorkOrderDetailRow("Collection ID", workOrder.workOrderCollectionId?.toString())
-                    WorkOrderDetailRow("Work Order #", workOrder.workOrderNumber)
-                    WorkOrderDetailRow("Assembly #", workOrder.workOrderAssemblyNumber)
-                    WorkOrderDetailRow("Clock In", workOrder.clockInTime)
-                    WorkOrderDetailRow("Part #", workOrder.partNumber)
-                    WorkOrderDetailRow("Operation Code", workOrder.operationCode)
-                    WorkOrderDetailRow("Operation Name", workOrder.operationName)
-                }
-            } else {
-                Text(
-                    text = "No active work order",
-                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+                .fillMaxWidth()
+                .padding(horizontal = 18.dp, vertical = 16.dp)
+        ) {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text(
+                        text = "Employee",
+                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
+                        color = MaterialTheme.colorScheme.onTertiary
+                    )
+                    Text(
+                        text = "ID: ${status.userId}",
+                        style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.9f)
+                    )
+                }
+
+                val workOrder = status.activeWorkOrder
+                if (workOrder != null) {
+                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Text(
+                            text = "Active Work Order",
+                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
+                            color = MaterialTheme.colorScheme.onTertiary
+                        )
+                        WorkOrderDetailRow("Collection ID", workOrder.workOrderCollectionId?.toString())
+                        WorkOrderDetailRow("Work Order #", workOrder.workOrderNumber)
+                        WorkOrderDetailRow("Assembly #", workOrder.workOrderAssemblyNumber)
+                        WorkOrderDetailRow("Clock In", workOrder.clockInTime)
+                        WorkOrderDetailRow("Part #", workOrder.partNumber)
+                        WorkOrderDetailRow("Operation Code", workOrder.operationCode)
+                        WorkOrderDetailRow("Operation Name", workOrder.operationName)
+                    }
+                } else {
+                    Text(
+                        text = "No active work order",
+                        style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
         }
     }
@@ -463,12 +480,12 @@ private fun WorkOrderDetailRow(label: String, value: String?) {
     ) {
         Text(
             text = label,
-            style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Medium),
+            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.9f)
         )
         Text(
             text = value?.takeIf { it.isNotBlank() } ?: "--",
-            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
+            style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.End
         )
@@ -484,10 +501,12 @@ private fun WorkOrdersKeypad(
 ) {
     Box(
         modifier = modifier,
-        contentAlignment = Alignment.Center
+        contentAlignment = Alignment.TopCenter
     ) {
         Card(
-            modifier = Modifier.fillMaxHeight(0.9f),
+            modifier = Modifier
+                .fillMaxHeight()
+                .padding(vertical = 8.dp),
             shape = RoundedCornerShape(20.dp),
             colors = CardDefaults.cardColors(
                 containerColor = TerminalKeypadBackground,
