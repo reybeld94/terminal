@@ -1,5 +1,6 @@
 package com.example.terminal.ui.workorders
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -33,6 +34,8 @@ import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedButtonDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -49,17 +52,26 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.terminal.data.network.ClockOutStatus
 import com.example.terminal.data.repository.UserStatus
+import com.example.terminal.ui.theme.TerminalBackgroundBottom
+import com.example.terminal.ui.theme.TerminalBackgroundTop
+import com.example.terminal.ui.theme.TerminalHelperText
+import com.example.terminal.ui.theme.TerminalKeypadBackground
+import com.example.terminal.ui.theme.TerminalKeypadButton
+import com.example.terminal.ui.theme.TerminalKeypadClear
+import com.example.terminal.ui.theme.TerminalKeypadEnter
 
 @Composable
 fun WorkOrdersScreen(
@@ -84,12 +96,18 @@ fun WorkOrdersScreen(
         Box(
             modifier = Modifier
                 .fillMaxSize()
+                .background(
+                    brush = Brush.verticalGradient(
+                        colors = listOf(TerminalBackgroundTop, TerminalBackgroundBottom)
+                    )
+                )
                 .padding(paddingValues)
         ) {
             Row(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(24.dp)
+                    .padding(start = 40.dp, top = 24.dp, end = 24.dp, bottom = 24.dp),
+                verticalAlignment = Alignment.Top
             ) {
                 WorkOrdersForm(
                     modifier = Modifier.weight(0.6f),
@@ -142,14 +160,10 @@ private fun WorkOrdersForm(
     val isClockOutEnabled = isClockInEnabled && !uiState.isLoading
     val employeeInstruction = "Enter your Employee ID and press Enter on the keypad to validate."
     val workOrderInstruction = "Use the keypad to enter or scan the assembly number and press Enter to continue."
-    val workerName = uiState.userStatus?.let { status ->
-        listOfNotNull(status.firstName, status.lastName)
-            .joinToString(separator = " ")
-            .takeIf { it.isNotBlank() }
-    }
-
     Column(
-        modifier = modifier.fillMaxHeight(),
+        modifier = modifier
+            .fillMaxHeight()
+            .padding(top = 16.dp),
         verticalArrangement = Arrangement.Top,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -158,7 +172,7 @@ private fun WorkOrdersForm(
                 title = "Please enter or scan your user ID",
                 modifier = Modifier.fillMaxWidth()
             )
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(32.dp))
             SelectableField(
                 label = "Employee #",
                 value = uiState.employeeId,
@@ -167,11 +181,14 @@ private fun WorkOrdersForm(
                 enabled = !uiState.isLoading,
                 isError = uiState.employeeValidationError != null
             )
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(10.dp))
             Text(
                 text = employeeInstruction,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface,
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Medium
+                ),
+                color = TerminalHelperText,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth()
             )
@@ -179,25 +196,25 @@ private fun WorkOrdersForm(
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = uiState.employeeValidationError,
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
                     color = MaterialTheme.colorScheme.error
                 )
             }
         } else {
+            Spacer(modifier = Modifier.height(24.dp))
             if (uiState.userStatus != null) {
                 EmployeeStatusCard(
                     status = uiState.userStatus,
                     modifier = Modifier.fillMaxWidth()
                 )
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(16.dp))
             }
 
             StepHeading(
                 title = "Please enter or scan your assembly number",
-                subtitle = workerName,
                 modifier = Modifier.fillMaxWidth()
             )
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(14.dp))
 
             SelectableField(
                 label = "Assembly #",
@@ -206,54 +223,67 @@ private fun WorkOrdersForm(
                 onClick = onWorkOrderClick,
                 enabled = uiState.isEmployeeValidated && !uiState.isLoading
             )
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(10.dp))
             Text(
                 text = workOrderInstruction,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface,
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Medium
+                ),
+                color = TerminalHelperText,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth()
             )
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(28.dp))
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
+                horizontalArrangement = Arrangement.spacedBy(26.dp)
             ) {
                 Button(
                     onClick = onClockIn,
                     enabled = isClockInEnabled,
                     modifier = Modifier
                         .weight(1f)
-                        .height(72.dp),
+                        .height(60.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary,
-                        contentColor = MaterialTheme.colorScheme.onPrimary
+                        containerColor = MaterialTheme.colorScheme.tertiary,
+                        contentColor = MaterialTheme.colorScheme.onTertiary,
+                        disabledContainerColor = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.4f),
+                        disabledContentColor = MaterialTheme.colorScheme.onTertiary.copy(alpha = 0.6f)
                     )
                 ) {
                     Text(
                         text = "Clock IN WO",
                         style = MaterialTheme.typography.titleLarge,
-                        color = MaterialTheme.colorScheme.onPrimary
+                        color = MaterialTheme.colorScheme.onTertiary,
+                        fontWeight = FontWeight.SemiBold
                     )
                 }
 
-                Button(
+                OutlinedButton(
                     onClick = onClockOut,
                     enabled = isClockOutEnabled,
                     modifier = Modifier
                         .weight(1f)
-                        .height(72.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary,
-                        contentColor = MaterialTheme.colorScheme.onPrimary,
-                        disabledContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.4f),
-                        disabledContentColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.6f)
+                        .height(60.dp),
+                    colors = OutlinedButtonDefaults.outlinedButtonColors(
+                        contentColor = MaterialTheme.colorScheme.onSurface,
+                        disabledContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
+                    ),
+                    border = BorderStroke(
+                        width = 1.dp,
+                        color = if (isClockOutEnabled) {
+                            MaterialTheme.colorScheme.outline
+                        } else {
+                            MaterialTheme.colorScheme.outline.copy(alpha = 0.4f)
+                        }
                     )
                 ) {
                     Text(
                         text = "Clock OUT WO",
                         style = MaterialTheme.typography.titleLarge,
-                        color = MaterialTheme.colorScheme.onPrimary
+                        color = MaterialTheme.colorScheme.onSurface,
+                        fontWeight = FontWeight.SemiBold
                     )
                 }
             }
@@ -269,7 +299,7 @@ private fun StepHeading(
 ) {
     Column(
         modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
@@ -277,7 +307,7 @@ private fun StepHeading(
             text = title,
             style = MaterialTheme.typography.headlineMedium,
             color = MaterialTheme.colorScheme.onSurface,
-            fontWeight = FontWeight.Bold,
+            fontWeight = FontWeight.SemiBold,
             textAlign = TextAlign.Center
         )
         if (subtitle != null) {
@@ -285,7 +315,8 @@ private fun StepHeading(
                 modifier = Modifier.fillMaxWidth(),
                 text = subtitle,
                 style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurface,
+                color = TerminalHelperText,
+                fontWeight = FontWeight.Medium,
                 textAlign = TextAlign.Center
             )
         }
@@ -323,8 +354,8 @@ private fun SelectableField(
         readOnly = true,
         enabled = enabled,
         isError = isError,
-        label = { Text(text = label) },
-        placeholder = { Text(text = "--") },
+        label = { Text(text = label, fontWeight = FontWeight.Medium) },
+        placeholder = { Text(text = "--", fontWeight = FontWeight.Medium) },
         singleLine = true,
         colors = OutlinedTextFieldDefaults.colors(
             focusedBorderColor = MaterialTheme.colorScheme.primary,
@@ -352,32 +383,34 @@ private fun EmployeeStatusCard(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer,
-            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+            contentColor = MaterialTheme.colorScheme.onSurfaceVariant
         )
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+                .padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(
                     text = "Employee",
                     style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontWeight = FontWeight.Medium
                 )
                 Text(
                     text = "${status.firstName} ${status.lastName}",
                     style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontWeight = FontWeight.SemiBold
                 )
                 Text(
                     text = "ID: ${status.userId}",
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
+                    fontWeight = FontWeight.Medium
                 )
             }
 
@@ -387,7 +420,8 @@ private fun EmployeeStatusCard(
                     Text(
                         text = "Active Work Order",
                         style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontWeight = FontWeight.Medium
                     )
                     WorkOrderDetailRow("Collection ID", workOrder.workOrderCollectionId?.toString())
                     WorkOrderDetailRow("Work Order #", workOrder.workOrderNumber)
@@ -400,8 +434,8 @@ private fun EmployeeStatusCard(
             } else {
                 Text(
                     text = "No active work order",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
@@ -417,13 +451,13 @@ private fun WorkOrderDetailRow(label: String, value: String?) {
     ) {
         Text(
             text = label,
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.9f)
+            style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Medium),
+            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.9f)
         )
         Text(
             text = value?.takeIf { it.isNotBlank() } ?: "--",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onPrimaryContainer,
+            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.End
         )
     }
@@ -437,42 +471,75 @@ private fun WorkOrdersKeypad(
     onEnter: () -> Unit
 ) {
     Card(
-        modifier = modifier,
-        shape = RoundedCornerShape(16.dp),
+        modifier = modifier.fillMaxHeight(0.95f),
+        shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer,
-            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-        )
+            containerColor = TerminalKeypadBackground,
+            contentColor = MaterialTheme.colorScheme.onSurface
+        ),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+        elevation = CardDefaults.cardElevation(defaultElevation = 12.dp)
     ) {
-        val keypadItems = listOf(
-            "1" to { onNumberClick("1") },
-            "2" to { onNumberClick("2") },
-            "3" to { onNumberClick("3") },
-            "4" to { onNumberClick("4") },
-            "5" to { onNumberClick("5") },
-            "6" to { onNumberClick("6") },
-            "7" to { onNumberClick("7") },
-            "8" to { onNumberClick("8") },
-            "9" to { onNumberClick("9") },
-            "Clear" to onClear,
-            "0" to { onNumberClick("0") },
-            "Enter" to onEnter
-        )
+        val keypadItems = buildList {
+            listOf("1", "2", "3", "4", "5", "6", "7", "8", "9").forEach { digit ->
+                add(
+                    KeypadItem(
+                        label = digit,
+                        onClick = { onNumberClick(digit) },
+                        backgroundColor = TerminalKeypadButton,
+                        contentColor = MaterialTheme.colorScheme.onSurface,
+                        fontSize = 28.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        borderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.6f)
+                    )
+                )
+            }
+            add(
+                KeypadItem(
+                    label = "Clear",
+                    onClick = onClear,
+                    backgroundColor = TerminalKeypadClear,
+                    contentColor = TerminalHelperText,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Medium,
+                    borderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
+                )
+            )
+            add(
+                KeypadItem(
+                    label = "0",
+                    onClick = { onNumberClick("0") },
+                    backgroundColor = TerminalKeypadButton,
+                    contentColor = MaterialTheme.colorScheme.onSurface,
+                    fontSize = 28.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    borderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.6f)
+                )
+            )
+            add(
+                KeypadItem(
+                    label = "Enter",
+                    onClick = onEnter,
+                    backgroundColor = TerminalKeypadEnter,
+                    contentColor = MaterialTheme.colorScheme.onTertiary,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    borderColor = Color.Transparent
+                )
+            )
+        }
 
         LazyVerticalGrid(
             columns = GridCells.Fixed(3),
             modifier = Modifier
                 .fillMaxSize()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.SpaceEvenly,
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
+                .padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
             userScrollEnabled = false
         ) {
-            items(keypadItems, key = { it.first }) { (label, action) ->
-                KeypadButton(
-                    label = label,
-                    onClick = action
-                )
+            items(keypadItems, key = { it.label }) { item ->
+                KeypadButton(item)
             }
         }
     }
@@ -480,33 +547,44 @@ private fun WorkOrdersKeypad(
 
 @Composable
 private fun KeypadButton(
-    label: String,
-    onClick: () -> Unit
+    item: KeypadItem
 ) {
     Surface(
         modifier = Modifier
             .fillMaxWidth()
             .aspectRatio(1f),
         shape = RoundedCornerShape(12.dp),
-        color = MaterialTheme.colorScheme.primary,
-        contentColor = MaterialTheme.colorScheme.onPrimary,
-        shadowElevation = 4.dp,
-        onClick = onClick
+        color = item.backgroundColor,
+        contentColor = item.contentColor,
+        shadowElevation = 6.dp,
+        tonalElevation = 2.dp,
+        border = item.borderColor?.let { BorderStroke(1.dp, it) },
+        onClick = item.onClick
     ) {
         Box(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
             Text(
-                text = label,
-                fontSize = 32.sp,
+                text = item.label,
+                fontSize = item.fontSize,
                 textAlign = TextAlign.Center,
-                color = MaterialTheme.colorScheme.onPrimary,
-                fontWeight = FontWeight.SemiBold
+                color = item.contentColor,
+                fontWeight = item.fontWeight
             )
         }
     }
 }
+
+private data class KeypadItem(
+    val label: String,
+    val onClick: () -> Unit,
+    val backgroundColor: Color,
+    val contentColor: Color,
+    val fontSize: TextUnit,
+    val fontWeight: FontWeight,
+    val borderColor: Color?
+)
 
 @Composable
 private fun LoadingOverlay() {
