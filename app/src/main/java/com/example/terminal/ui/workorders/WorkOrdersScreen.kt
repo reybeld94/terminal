@@ -204,39 +204,50 @@ private fun WorkOrdersForm(
             }
         } else {
             Spacer(modifier = Modifier.height(34.dp))
-            if (uiState.userStatus != null) {
-                EmployeeStatusCard(
-                    status = uiState.userStatus,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                Spacer(modifier = Modifier.height(16.dp))
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
+            ) {
+                Column(
+                    modifier = Modifier.align(Alignment.Center),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    if (uiState.userStatus != null) {
+                        EmployeeStatusCard(
+                            status = uiState.userStatus,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                    }
+
+                    StepHeading(
+                        title = "Please enter or scan your assembly number",
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    SelectableField(
+                        label = "Assembly #",
+                        value = uiState.workOrderId,
+                        isActive = uiState.activeField == WorkOrderInputField.WORK_ORDER,
+                        onClick = onWorkOrderClick,
+                        enabled = uiState.isEmployeeValidated && !uiState.isLoading
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = workOrderInstruction,
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Normal
+                        ),
+                        color = TerminalHelperText,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
             }
-
-            StepHeading(
-                title = "Please enter or scan your assembly number",
-                modifier = Modifier.fillMaxWidth()
-            )
-            Spacer(modifier = Modifier.height(6.dp))
-
-            SelectableField(
-                label = "Assembly #",
-                value = uiState.workOrderId,
-                isActive = uiState.activeField == WorkOrderInputField.WORK_ORDER,
-                onClick = onWorkOrderClick,
-                enabled = uiState.isEmployeeValidated && !uiState.isLoading
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = workOrderInstruction,
-                style = MaterialTheme.typography.bodyMedium.copy(
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.Normal
-                ),
-                color = TerminalHelperText,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth()
-            )
-            Spacer(modifier = Modifier.height(22.dp))
+            Spacer(modifier = Modifier.height(32.dp))
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(34.dp)
@@ -340,15 +351,15 @@ private fun SelectableField(
     val isFocused by interactionSource.collectIsFocusedAsState()
     val displayValue = if (value.isBlank()) "" else value
     val shape = RoundedCornerShape(14.dp)
-    val activeColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f)
-    val inactiveColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.6f)
+    val inactiveColor = MaterialTheme.colorScheme.outline.copy(alpha = if (enabled) 0.6f else 0.4f)
+    val focusedColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.75f)
     val borderColor = when {
-        !enabled -> MaterialTheme.colorScheme.outline.copy(alpha = 0.4f)
+        !enabled -> inactiveColor
         isError -> MaterialTheme.colorScheme.error
-        isActive || isFocused -> activeColor
+        isActive || isFocused -> focusedColor
         else -> inactiveColor
     }
-    val borderWidth = if (isActive || isFocused) 3.dp else 1.5.dp
+    val borderWidth = if (isActive || isFocused) 2.dp else 1.5.dp
 
     OutlinedTextField(
         value = displayValue,
@@ -389,7 +400,7 @@ private fun SelectableField(
             unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
             disabledTextColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
             errorLabelColor = MaterialTheme.colorScheme.error,
-            focusedLabelColor = activeColor,
+            focusedLabelColor = focusedColor,
             unfocusedLabelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
             disabledLabelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
         )
