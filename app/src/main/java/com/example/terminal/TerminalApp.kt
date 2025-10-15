@@ -56,7 +56,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.layout.offset
+import androidx.compose.foundation.layout.offset
 import com.example.terminal.data.local.UserPrefs
 import com.example.terminal.data.network.ApiClient
 import com.example.terminal.ui.theme.TerminalTheme
