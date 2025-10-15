@@ -153,13 +153,6 @@ private fun WorkOrdersForm(
         verticalArrangement = Arrangement.Top,
         horizontalAlignment = Alignment.Start
     ) {
-        Text(
-            text = "Work Orders",
-            style = MaterialTheme.typography.headlineSmall,
-            color = MaterialTheme.colorScheme.onSurface
-        )
-        Spacer(modifier = Modifier.height(24.dp))
-
         if (!uiState.isEmployeeValidated) {
             StepHeading(title = "Please enter or scan your user ID")
             Spacer(modifier = Modifier.height(24.dp))
@@ -204,50 +197,50 @@ private fun WorkOrdersForm(
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurface
             )
-        }
 
-        if (uiState.isEmployeeValidated && uiState.userStatus != null) {
-            Spacer(modifier = Modifier.height(24.dp))
-            EmployeeStatusCard(status = uiState.userStatus)
-        }
+            if (uiState.userStatus != null) {
+                Spacer(modifier = Modifier.height(24.dp))
+                EmployeeStatusCard(status = uiState.userStatus)
+            }
 
-        Spacer(modifier = Modifier.height(32.dp))
-        Button(
-            onClick = onClockIn,
-            enabled = isClockInEnabled,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(72.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary
-            )
-        ) {
-            Text(
-                text = "Clock IN WO",
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onPrimary
-            )
-        }
-        Spacer(modifier = Modifier.height(16.dp))
-        Button(
-            onClick = onClockOut,
-            enabled = isClockOutEnabled,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(72.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary,
-                disabledContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.4f),
-                disabledContentColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.6f)
-            )
-        ) {
-            Text(
-                text = "Clock OUT WO",
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onPrimary
-            )
+            Spacer(modifier = Modifier.height(32.dp))
+            Button(
+                onClick = onClockIn,
+                enabled = isClockInEnabled,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(72.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                )
+            ) {
+                Text(
+                    text = "Clock IN WO",
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.onPrimary
+                )
+            }
+            Spacer(modifier = Modifier.height(16.dp))
+            Button(
+                onClick = onClockOut,
+                enabled = isClockOutEnabled,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(72.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                    disabledContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.4f),
+                    disabledContentColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.6f)
+                )
+            ) {
+                Text(
+                    text = "Clock OUT WO",
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.onPrimary
+                )
+            }
         }
     }
 }
