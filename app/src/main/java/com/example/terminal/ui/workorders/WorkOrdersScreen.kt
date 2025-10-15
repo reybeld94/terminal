@@ -108,8 +108,8 @@ fun WorkOrdersScreen(
             Row(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(start = 52.dp, top = 24.dp, end = 24.dp, bottom = 24.dp),
-                verticalAlignment = Alignment.Top
+                    .padding(start = 32.dp, top = 12.dp, end = 24.dp, bottom = 12.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 WorkOrdersForm(
                     modifier = Modifier.weight(0.6f),
@@ -119,8 +119,6 @@ fun WorkOrdersScreen(
                     onClockIn = viewModel::onClockIn,
                     onClockOut = viewModel::onClockOutClick
                 )
-
-                Spacer(modifier = Modifier.width(24.dp))
 
                 WorkOrdersKeypad(
                     modifier = Modifier
@@ -165,7 +163,8 @@ private fun WorkOrdersForm(
     Column(
         modifier = modifier
             .fillMaxHeight()
-            .padding(top = 24.dp),
+            .padding(top = 24.dp)
+            .offset(y = (-36).dp),
         verticalArrangement = Arrangement.Top,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -203,51 +202,48 @@ private fun WorkOrdersForm(
                 )
             }
         } else {
-            Spacer(modifier = Modifier.height(34.dp))
-            Box(
+            Spacer(modifier = Modifier.height(40.dp))
+            uiState.userStatus?.let { status ->
+                EmployeeStatusCard(
+                    status = status,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(modifier = Modifier.height(20.dp))
+            }
+
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(1f)
+                    .weight(1f, fill = false),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
             ) {
-                Column(
-                    modifier = Modifier.align(Alignment.Center),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    if (uiState.userStatus != null) {
-                        EmployeeStatusCard(
-                            status = uiState.userStatus,
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
-                    }
+                StepHeading(
+                    title = "Please enter or scan your assembly number",
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(modifier = Modifier.height(12.dp))
 
-                    StepHeading(
-                        title = "Please enter or scan your assembly number",
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    Spacer(modifier = Modifier.height(6.dp))
-
-                    SelectableField(
-                        label = "Assembly #",
-                        value = uiState.workOrderId,
-                        isActive = uiState.activeField == WorkOrderInputField.WORK_ORDER,
-                        onClick = onWorkOrderClick,
-                        enabled = uiState.isEmployeeValidated && !uiState.isLoading
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = workOrderInstruction,
-                        style = MaterialTheme.typography.bodyMedium.copy(
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.Normal
-                        ),
-                        color = TerminalHelperText,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
+                SelectableField(
+                    label = "Assembly #",
+                    value = uiState.workOrderId,
+                    isActive = uiState.activeField == WorkOrderInputField.WORK_ORDER,
+                    onClick = onWorkOrderClick,
+                    enabled = uiState.isEmployeeValidated && !uiState.isLoading
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = workOrderInstruction,
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Normal
+                    ),
+                    color = TerminalHelperText,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
+                )
             }
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(16.dp))
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(34.dp)
@@ -497,18 +493,20 @@ private fun WorkOrdersKeypad(
     onClear: () -> Unit,
     onEnter: () -> Unit
 ) {
-    Card(
-        modifier = modifier
-            .fillMaxHeight(0.95f)
-            .offset(y = (-12).dp),
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = TerminalKeypadBackground,
-            contentColor = MaterialTheme.colorScheme.onSurface
-        ),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
-        elevation = CardDefaults.cardElevation(defaultElevation = 10.dp)
+    Box(
+        modifier = modifier,
+        contentAlignment = Alignment.Center
     ) {
+        Card(
+            modifier = Modifier.fillMaxHeight(0.9f),
+            shape = RoundedCornerShape(20.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = TerminalKeypadBackground,
+                contentColor = MaterialTheme.colorScheme.onSurface
+            ),
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+            elevation = CardDefaults.cardElevation(defaultElevation = 10.dp)
+        ) {
         val keypadItems = buildList {
             listOf("1", "2", "3", "4", "5", "6", "7", "8", "9").forEach { digit ->
                 add(
