@@ -25,13 +25,16 @@ class ClockInRequest(StrictBaseModel):
     @validator("userId", pre=True)
     def validate_user_id(cls, value: int | str) -> int:
         if isinstance(value, int):
+            _ensure_positive_user_id(value)
             return value
 
         if isinstance(value, str):
             stripped_value = value.strip()
             if not stripped_value.isdigit():
                 raise ValueError("userId must contain only digits")
-            return int(stripped_value)
+            parsed_value = int(stripped_value)
+            _ensure_positive_user_id(parsed_value)
+            return parsed_value
 
         raise ValueError("userId must be provided as an integer value")
 
@@ -62,3 +65,8 @@ def _ensure_iso_datetime(value: str) -> None:
         datetime.fromisoformat(value.replace("Z", "+00:00"))
     except ValueError as exc:
         raise ValueError("Value must be a valid ISO 8601 datetime string") from exc
+
+
+def _ensure_positive_user_id(value: int) -> None:
+    if value <= 0:
+        raise ValueError("userId must be a positive integer")
