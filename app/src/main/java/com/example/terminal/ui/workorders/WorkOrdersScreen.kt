@@ -199,6 +199,7 @@ private fun WorkOrdersForm(
                 uiState.userStatus?.let { status ->
                     EmployeeStatusCard(
                         status = status,
+                        employeeId = uiState.employeeId,
                         modifier = Modifier.fillMaxWidth()
                     )
                     Spacer(modifier = Modifier.height(28.dp))
@@ -404,6 +405,7 @@ private fun SelectableField(
 @Composable
 private fun EmployeeStatusCard(
     status: UserStatus,
+    employeeId: String,
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -437,7 +439,7 @@ private fun EmployeeStatusCard(
                         color = MaterialTheme.colorScheme.onTertiary
                     )
                     Text(
-                        text = "ID: ${status.userId}",
+                        text = "Employee ID: ${employeeId.trim()}",
                         style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
                         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.9f)
                     )
